@@ -71,6 +71,7 @@ Planned (not created yet):
 
 - **File naming:** kebab-case files, camelCase functions, PascalCase types with no `I` prefix. Don't write barrel `index.ts` re-exports, import from the specific file. The exception is `src/cli/index.ts`, which is the bin.
 - **Validation:** hand-written validators in the `config/validate.ts` style. Reject unknown keys, report every issue (not just the first) with a dotted path such as `budgets.perTaskTokens`, then merge with defaults. Arrays from user input replace defaults; they are not merged.
+- **Index signatures:** read them with brackets (`raw["checks"]`), as `noPropertyAccessFromIndexSignature` requires. Biome's `useLiteralKeys` is off because it conflicts with that setting.
 - **Results vs. throws:** validators return `{ ok: true, value } | { ok: false, issues }`. Loaders and commands throw `OrcError`.
 - **Tests:** colocate them as `foo.test.ts` next to `foo.ts`. Use `test/fixtures/` for static files and `fs.mkdtemp(os.tmpdir())` for anything written, cleaned up in `afterEach`. Assert behaviour, not implementation.
 - **Vault writes (M1+):** append-only for `LOG.md`. Write other files atomically (temp file plus `rename`). Every LOG line follows `[YYYY-MM-DD HH:mm][session] did X | touching: files`.

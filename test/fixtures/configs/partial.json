@@ -1,0 +1,7 @@
+{
+  "vaultDir": "notes",
+  "adapter": "fake",
+  "driver": { "model": "claude-sonnet-5-5" },
+  "retries": { "maxPerTask": 0 },
+  "checks": [{ "name": "test", "command": "pnpm test" }]
+}

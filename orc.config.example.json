@@ -1,0 +1,14 @@
+{
+  "vaultDir": "vault",
+  "adapter": "claude-agent-sdk",
+  "planner": { "model": "claude-opus-5-5" },
+  "driver": { "model": "claude-haiku-5-5" },
+  "budgets": { "perTaskTokens": 500000, "perRunTokens": 10000000 },
+  "retries": { "maxPerTask": 2 },
+  "checks": [
+    { "name": "typecheck", "command": "npm run typecheck", "timeoutMs": 600000 },
+    { "name": "lint", "command": "npm run lint", "timeoutMs": 600000 },
+    { "name": "test", "command": "npm test", "timeoutMs": 600000 },
+    { "name": "build", "command": "npm run build", "timeoutMs": 600000 }
+  ]
+}

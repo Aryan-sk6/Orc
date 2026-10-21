@@ -1,0 +1,13 @@
+{
+  "vaultDir": 42,
+  "adapter": "codex",
+  "planner": "claude-opus-5-5",
+  "budgets": { "perTaskTokens": -5, "perRunTokns": 100 },
+  "retries": { "maxPerTask": 1.5 },
+  "checks": [
+    { "name": "lint", "command": "npm run lint" },
+    { "name": "lint", "command": "" },
+    "npm test"
+  ],
+  "verbose": true
+}
