@@ -1,0 +1,5 @@
+{
+  "vaultDir": "vault",
+  "adapter": "fake",
+  "budgets": { "perTaskTokens": 200000, "perRunTokens": 2000000 }
+}
