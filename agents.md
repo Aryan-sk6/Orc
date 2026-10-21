@@ -3,6 +3,7 @@
 This is the guide for any coding agent working on **orc**, a TypeScript CLI that orchestrates AI coding sessions to build an app from one plan. The scope is in `vault/Context/Spec.md` and the current milestone is in `vault/Context/Roadmap.md`.
 
 ## Stack (one line per library)
+
 - **Node ≥ 20**, ESM only (`"type": "module"`). Use `node:` builtins for fs, path, child_process, events and util.
 - **TypeScript 7** in strict mode with extra strictness (see `tsconfig.json`). It uses `NodeNext` modules, so relative imports end in `.js`.
 - **`node:util` `parseArgs`** handles CLI argument parsing. No CLI framework.
@@ -12,6 +13,7 @@ This is the guide for any coding agent working on **orc**, a TypeScript CLI that
 - **Runtime dependencies: none.** Adding one needs a decision note in `vault/Decisions/`.
 
 ## Commands
+
 ```
 npm run typecheck   # tsc on src + tests, no emit
 npm run lint        # biome check (lint + format check)
@@ -23,6 +25,7 @@ node dist/cli/index.js --help
 ```
 
 ## Folder structure
+
 ```
 agents.md                 this file
 CLAUDE.md                 pointer for Claude Code sessions
@@ -54,6 +57,7 @@ Planned (not created yet):
 ```
 
 ## Hard rules
+
 - **No `any`.** At every boundary (JSON, CLI args, SDK output), take `unknown` and narrow it with a type guard or validator. Avoid `as` casts. The only exceptions are `as const` and narrowing an already-validated value, and those need a one-line comment explaining why.
 - **Explicit interfaces** for every exported shape. Exported functions get explicit return types. Config and plan data are `readonly`.
 - **LLM calls only in `src/planner/` and `src/driver/`**, and always through `AgentAdapter`. Every other module is deterministic and must not import the SDK.
@@ -64,6 +68,7 @@ Planned (not created yet):
 - **Errors:** throw `OrcError` with a code from `OrcErrorCode`. Only `src/cli/` prints to the terminal or sets the exit code. Library code never calls `process.exit` or `console.log`.
 
 ## Patterns
+
 - **File naming:** kebab-case files, camelCase functions, PascalCase types with no `I` prefix. Don't write barrel `index.ts` re-exports, import from the specific file. The exception is `src/cli/index.ts`, which is the bin.
 - **Validation:** hand-written validators in the `config/validate.ts` style. Reject unknown keys, report every issue (not just the first) with a dotted path such as `budgets.perTaskTokens`, then merge with defaults. Arrays from user input replace defaults; they are not merged.
 - **Results vs. throws:** validators return `{ ok: true, value } | { ok: false, issues }`. Loaders and commands throw `OrcError`.
@@ -72,4 +77,5 @@ Planned (not created yet):
 - **Git:** use Conventional Commits (`feat(config): …`, `chore: …`, `docs(vault): …`). Commit after each completed step, after `npm run check` passes.
 
 ## Project memory
+
 Read `vault/Home.md` at the start of every session and follow the end-of-session steps in `CLAUDE.md`. Record decisions in `vault/Decisions/` and append a line to `vault/LOG.md` for each step.

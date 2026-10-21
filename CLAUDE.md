@@ -3,6 +3,7 @@
 **Read `agents.md` first.** It covers the stack, folders, hard rules, patterns and commands. Scope is defined in `vault/Context/Spec.md`, and the current milestone is in `vault/Context/Roadmap.md`. Build one milestone per session, then commit, stop and report.
 
 ## Shared session memory: `vault/`
+
 `vault/` is an Obsidian vault and serves as the project's shared memory. It is committed to git.
 
 **At the start of a session:** read `vault/Home.md`, `vault/rules.md` and `vault/Context/Roadmap.md`. Check `vault/Context/Open Questions.md`, the latest note in `vault/Sessions/`, and the tail of `vault/LOG.md`.
