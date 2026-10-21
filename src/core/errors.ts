@@ -3,7 +3,10 @@ export type OrcErrorCode =
   | "CONFIG_NOT_FOUND"
   | "CONFIG_UNREADABLE"
   | "CONFIG_INVALID_JSON"
-  | "CONFIG_INVALID";
+  | "CONFIG_INVALID"
+  | "INVALID_SESSION_NAME"
+  | "INVALID_LOG_ENTRY"
+  | "VAULT_NOT_FOUND";
 
 /** Expected failure with a stable code. Only src/cli/ turns these into output and exit codes. */
 export class OrcError extends Error {
