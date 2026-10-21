@@ -1,0 +1,6 @@
+{
+  "vaultDir": "vault",
+  "adapter": "fake",
+  "fakeScript": "orc.fake.json",
+  "maxBudgetUsd": 5
+}

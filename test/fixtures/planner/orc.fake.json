@@ -1,0 +1,6 @@
+{
+  "turns": [
+    { "expect": "Phase 1", "textFile": "questions-reply.md", "costUsd": 0.0412 },
+    { "expect": "Phase 2", "textFile": "plan-reply.md", "costUsd": 0.3125 }
+  ]
+}

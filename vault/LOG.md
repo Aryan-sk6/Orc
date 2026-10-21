@@ -13,3 +13,4 @@ One line per update, newest last, in the format `[time][session] did X | touchin
 [2026-10-21 23:41][m1] M1 done: session note, decision 0005, roadmap/home/open questions updated | touching: vault/
 [2026-10-21 23:47][m1] budgets simplified: dropped token caps; run cap is maxBudgetUsd (USD, SDK estimate) + retry cap; status shows per-session COST and spend vs cap | touching: src/config/, src/vault/session-note.ts, src/cli/commands/status.ts, orc.config.example.json, test/fixtures/
 [2026-10-21 23:48][m1] recorded user answers: decisions 0006 (USD run cap) + 0007 (shared planner prompt, API key); roadmap moves AgentAdapter+Fake into M2 | touching: vault/, agents.md
+[2026-10-21 23:56][m2] AgentAdapter interface, FakeAgentAdapter + JSON fake script loader, createAdapter, fakeScript config key | touching: src/agents/, src/config/, src/core/errors.ts, orc.config.example.json
