@@ -8,8 +8,8 @@ Build one milestone per session, then commit, stop and report. Full text is in [
 | # | Milestone | Status | Session |
 |---|---|---|---|
 | M0 | orc's own `agents.md`, project skeleton, config loader | ✅ done 2026-10-21 | [[2026-10-21-m0-skeleton]] |
-| M1 | Vault module, LOG writer, CLI scaffolding (`orc status` on fake data) | 🚧 in progress | |
-| M2 | Planner (`orc plan`, `orc check-setup`), tested with FakeAgentAdapter | | |
+| M1 | Vault module, LOG writer, CLI scaffolding (`orc status` on fake data) | ✅ done 2026-10-21 | [[2026-10-21-m1-vault-cli]] |
+| M2 | Planner (`orc plan`, `orc check-setup`), tested with FakeAgentAdapter | ⏭ next (open question first) | |
 | M3 | AgentAdapter, Claude Agent SDK adapter, git worktree/checkpoint manager | SDK docs fetched ([[claude-agent-sdk]]) | |
 | M4 | Driver loop: checks gate, budgets, retries, escalation | | |
 | M5 | Integration driver, `orc summarize`, `orc rewind` | | |

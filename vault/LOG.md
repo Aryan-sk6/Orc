@@ -10,3 +10,4 @@ One line per update, newest last, in the format `[time][session] did X | touchin
 [2026-10-21 23:32][m1] renamed master→main (no push until after M6); fetched + trimmed Claude Agent SDK docs (0.3.306); recorded M7 kit in spec addendum + roadmap | touching: vault/docs/claude-agent-sdk.md, vault/Context/Spec.md, vault/Context/Roadmap.md, vault/Decisions/0004-*
 [2026-10-21 23:37][m1] vault module: layout, frontmatter, LOG writer/reader, session notes, decisions, ensureVault; fixed biome ignore that skipped src/vault | touching: src/vault/, src/core/fs.ts, src/core/errors.ts, test/helpers/tmp-dir.ts, biome.json
 [2026-10-21 23:40][m1] CLI scaffolding: command registry, status (table/--json) on fake demo vault, log (append/--tail), config moved to commands/ | touching: src/cli/, test/fixtures/demo/, test/helpers/cli.ts, agents.md, package.json
+[2026-10-21 23:41][m1] M1 done: session note, decision 0005, roadmap/home/open questions updated | touching: vault/
