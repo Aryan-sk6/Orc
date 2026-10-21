@@ -3,3 +3,8 @@ vault/.obsidian/workspace*.json
 vault/.obsidian/cache
 vault/.trash/
 .DS_Store
+
+# Build / deps
+node_modules/
+dist/
+coverage/

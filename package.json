@@ -1,0 +1,30 @@
+{
+  "name": "orc",
+  "version": "0.0.0",
+  "description": "Orchestrate AI coding sessions to build an app from one detailed plan.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "orc": "dist/cli/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm run lint && npm test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.2",
+    "@types/node": "20.19.43",
+    "typescript": "7.0.2",
+    "vitest": "4.1.12"
+  }
+}
