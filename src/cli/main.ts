@@ -1,28 +1,10 @@
 import { readFile } from "node:fs/promises";
-import { parseArgs } from "node:util";
-import { loadConfig } from "../config/load.js";
-import { errorCode, errorMessage, OrcError } from "../core/errors.js";
+import { OrcError } from "../core/errors.js";
+import { GLOBAL_OPTIONS_HELP, splitCommandLine } from "./args.js";
+import type { CliIO } from "./io.js";
+import { COMMANDS, findCommand } from "./registry.js";
 
-/** Everything the CLI touches in the outside world, injected so tests can capture it. */
-export interface CliIO {
-  readonly cwd: string;
-  readonly stdout: (text: string) => void;
-  readonly stderr: (text: string) => void;
-}
-
-const HELP = `orc: orchestrate AI coding sessions to build an app from one plan
-
-Usage:
-  orc <command> [options]
-
-Commands:
-  config    Print the resolved config (orc.config.json merged with defaults)
-
-Options:
-  -c, --config <path>    Config file (default: ./orc.config.json)
-  -h, --help             Show this help
-  -v, --version          Show the orc version
-`;
+export type { CliIO } from "./io.js";
 
 /** Runs the CLI and returns the process exit code. Never calls process.exit. */
 export async function main(argv: readonly string[], io: CliIO): Promise<number> {
@@ -41,49 +23,42 @@ export async function main(argv: readonly string[], io: CliIO): Promise<number> 
 }
 
 async function run(argv: readonly string[], io: CliIO): Promise<number> {
-  const { values, positionals } = parseCliArgs(argv);
+  const line = splitCommandLine(argv);
 
-  if (values.version) {
+  if (line.version) {
     io.stdout(`${await readVersion()}\n`);
     return 0;
   }
-
-  const [command] = positionals;
-  if (values.help || command === undefined) {
-    io.stdout(HELP);
+  if (line.command === undefined) {
+    io.stdout(globalHelp());
     return 0;
   }
 
-  switch (command) {
-    case "config": {
-      const loaded = await loadConfig({ cwd: io.cwd, path: values.config });
-      io.stdout(`${JSON.stringify(loaded, null, 2)}\n`);
-      return 0;
-    }
-    default:
-      throw new OrcError("USAGE", `unknown command "${command}". Run "orc --help".`);
+  const command = findCommand(line.command);
+  if (command === undefined) {
+    throw new OrcError("USAGE", `unknown command "${line.command}". Run "orc --help".`);
   }
+  if (line.help) {
+    io.stdout(command.help);
+    return 0;
+  }
+  return command.run(line.rest, io);
 }
 
-function parseCliArgs(argv: readonly string[]) {
-  try {
-    return parseArgs({
-      args: [...argv],
-      allowPositionals: true,
-      strict: true,
-      options: {
-        config: { type: "string", short: "c" },
-        help: { type: "boolean", short: "h" },
-        version: { type: "boolean", short: "v" },
-      },
-    });
-  } catch (error) {
-    // parseArgs throws TypeErrors with ERR_PARSE_ARGS_* codes for unknown or malformed options.
-    if (errorCode(error)?.startsWith("ERR_PARSE_ARGS") === true) {
-      throw new OrcError("USAGE", errorMessage(error));
-    }
-    throw error;
-  }
+function globalHelp(): string {
+  const width = Math.max(...COMMANDS.map((command) => command.name.length));
+  const commands = COMMANDS.map(
+    (command) => `  ${command.name.padEnd(width)}    ${command.summary}`,
+  ).join("\n");
+  return `orc: orchestrate AI coding sessions to build an app from one plan
+
+Usage:
+  orc <command> [options]
+
+Commands:
+${commands}
+
+${GLOBAL_OPTIONS_HELP}`;
 }
 
 async function readVersion(): Promise<string> {

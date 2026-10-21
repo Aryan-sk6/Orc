@@ -33,20 +33,34 @@ orc.config.example.json   every config key with its default
 src/
   cli/
     index.ts              bin entry (shebang); calls main() and sets the exit code. No logic here.
-    main.ts               argv → command dispatch; takes injected CliIO so it's testable
+    main.ts               argv → command dispatch, global help/version, OrcError → exit code
+    io.ts                 CliIO: cwd, now(), stdout, stderr (injected so tests capture them)
+    args.ts               GLOBAL_OPTIONS, splitCommandLine, parseCommandArgs (strict, typed per command)
+    command.ts            Command interface: name, summary, help, run(argv, io)
+    registry.ts           COMMANDS list; add new commands here
+    table.ts              renderTable for terminal tables
+    commands/             one file per command: status.ts, log.ts, config.ts (+ *.test.ts)
   config/
     types.ts              OrcConfig and OrcConfigInput interfaces
     defaults.ts           DEFAULT_CONFIG and DEFAULT_CHECK_TIMEOUT_MS
     validate.ts           unknown → OrcConfigInput, with path-aware ConfigIssue[]
     load.ts               find file → parse JSON → validate → merge defaults
   core/
-    errors.ts             OrcError(code, message, details)
-test/fixtures/            static fixtures (configs/ …)
-vault/                    project memory for developing orc (Obsidian)
+    errors.ts             OrcError(code, message, details), errorCode(), errorMessage()
+    fs.ts                 readFileIfExists, writeFileAtomic, writeFileIfMissing, KeyedMutex
+  vault/                  the TARGET app's vault (what orc reads/writes at runtime)
+    layout.ts             VAULT_LAYOUT names, vaultPaths(), session-name rules
+    frontmatter.ts        flat key: scalar frontmatter parse/serialize
+    log.ts                LOG.md line format, appendLog, readLogTail
+    session-note.ts       SessionState frontmatter + Progress/Problems/Decisions sections
+    decisions.ts          numbered escalations in decisions.md
+    init.ts               ensureVault: create layout + seed files, never overwrite
+test/
+  helpers/                tmp-dir.ts (useTmpDir, localTime), cli.ts (captureIO)
+  fixtures/               configs/, demo/ (fake vault for `orc status`; npm run demo:status)
+vault/                    project memory for developing orc (Obsidian). NOT the target vault.
 
 Planned (not created yet):
-  src/vault/              M1: LOG writer, session notes, decisions, rules (target-app vault)
-  src/cli/commands/       M1: one file per command
   src/planner/            M2: orc plan, orc check-setup
   src/agents/             M3: adapter.ts (AgentAdapter), fake.ts (FakeAgentAdapter), claude-sdk.ts
   src/git/                M3: worktrees, branches, checkpoint tags
@@ -59,7 +73,7 @@ Planned (not created yet):
 ## Hard rules
 
 - **No `any`.** At every boundary (JSON, CLI args, SDK output), take `unknown` and narrow it with a type guard or validator. Avoid `as` casts. The only exceptions are `as const` and narrowing an already-validated value, and those need a one-line comment explaining why.
-- **Explicit interfaces** for every exported shape. Exported functions get explicit return types. Config and plan data are `readonly`.
+- **Explicit interfaces** for every exported shape. Exported functions get explicit return types. The one exception is a thin wrapper whose type comes from a generic library call, such as `parseCommandArgs`. Config and plan data are `readonly`.
 - **LLM calls only in `src/planner/` and `src/driver/`**, and always through `AgentAdapter`. Every other module is deterministic and must not import the SDK.
 - **Never guess an SDK API.** If `vault/docs/` doesn't cover a call, stop and ask the user to paste the docs.
 - **Event-driven only.** No `setInterval` or sleep-and-check loops. React to adapter events, child-process exits and promises.
@@ -74,7 +88,9 @@ Planned (not created yet):
 - **Index signatures:** read them with brackets (`raw["checks"]`), as `noPropertyAccessFromIndexSignature` requires. Biome's `useLiteralKeys` is off because it conflicts with that setting.
 - **Results vs. throws:** validators return `{ ok: true, value } | { ok: false, issues }`. Loaders and commands throw `OrcError`.
 - **Tests:** colocate them as `foo.test.ts` next to `foo.ts`. Use `test/fixtures/` for static files and `fs.mkdtemp(os.tmpdir())` for anything written, cleaned up in `afterEach`. Assert behaviour, not implementation.
-- **Vault writes (M1+):** append-only for `LOG.md`. Write other files atomically (temp file plus `rename`). Every LOG line follows `[YYYY-MM-DD HH:mm][session] did X | touching: files`.
+- **Vault writes:** use `src/vault/*` and never hand-roll paths or formats. `LOG.md` is append-only, with one `appendFile` per line. Other files are written atomically with `writeFileAtomic`, and read-modify-write goes through a `KeyedMutex`. Every LOG line follows `[YYYY-MM-DD HH:mm][session] did X | touching: files`. Session state lives in session-note frontmatter, and `orc status` reads only the vault.
+- **New CLI command:** add `src/cli/commands/<name>.ts` that exports a `Command`, register it in `registry.ts`, and parse options with `parseCommandArgs`. Command options go _after_ the command name.
+- **Timestamps** come from the injected `now()` and are formatted with `formatTimestamp` (local `YYYY-MM-DD HH:mm`). Tests use `localTime()` so they pass in any time zone.
 - **Git:** use Conventional Commits (`feat(config): …`, `chore: …`, `docs(vault): …`). Commit after each completed step, after `npm run check` passes.
 
 ## Project memory
