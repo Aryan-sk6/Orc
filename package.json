@@ -8,7 +8,8 @@
     "orc": "dist/cli/index.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "kit"
   ],
   "engines": {
     "node": ">=20"
@@ -20,7 +21,8 @@
     "format": "biome check --write .",
     "test": "vitest run",
     "check": "npm run typecheck && npm run lint && npm test",
-    "demo:status": "npm run build && node dist/cli/index.js status -c test/fixtures/demo/orc.config.json"
+    "demo:status": "npm run build && node dist/cli/index.js status -c test/fixtures/demo/orc.config.json",
+    "demo:plan": "npm run build && rm -rf .demo/plan && mkdir -p .demo && cp -R test/fixtures/planner .demo/plan && cd .demo/plan && node ../../dist/cli/index.js plan idea.md"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.2",
