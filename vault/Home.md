@@ -6,7 +6,7 @@ tags: [index]
 Shared memory for every working session on ORC, whether a person or Claude runs it. Read this page first, and update it when anything important changes.
 
 ## Current state
-- **Status:** M1 is done (2026-10-21). That covers the vault module, the LOG writer, and `orc status`/`orc log`/`orc config`. M2 (planner) is next. **Answer the planner code-or-prompt question first** (see [[Open Questions]]).
+- **Status:** M1 is done (2026-10-21). That covers the vault module, the LOG writer, and `orc status`/`orc log`/`orc config`. Budgets are now a USD run cap ([[0006-usd-run-cap-no-token-accounting]]). **M2 is next and unblocked:** AgentAdapter, FakeAgentAdapter, the shared planner prompt and check-setup ([[0007-shared-planner-prompt-and-api-key]]).
 - **Try it:** run `npm run demo:status` for `orc status` on fake data.
 - **Branch:** `main`, local commits only. No push until after M6 ([[0004-branch-main-no-push-until-m6]]).
 - **SDK docs:** [[claude-agent-sdk]] (read against 0.3.306). Its gaps feed the open questions on token caps and auth.
@@ -33,3 +33,5 @@ Shared memory for every working session on ORC, whether a person or Claude runs 
 - [[0003-config-shape-and-defaults]]
 - [[0004-branch-main-no-push-until-m6]]
 - [[0005-session-state-in-note-frontmatter]]
+- [[0006-usd-run-cap-no-token-accounting]]
+- [[0007-shared-planner-prompt-and-api-key]]
