@@ -1,12 +1,10 @@
 ---
 tags: [docs]
 ---
-# Pasted docs
+# Fetched and pasted docs
 
-Current third-party docs go here, pasted by the user, so agents don't rely on stale training data. Use one file per library, for example `claude-agent-sdk.md`.
-
-## Needed
+This folder holds current third-party docs, so agents don't rely on stale training data. Keep one file per library, for example `claude-agent-sdk.md`. Each file records its source URLs, fetch date and the package version it was read against. The user may also paste docs here.
 
 | Doc | Needed by | Status |
 |---|---|---|
-| Claude Agent SDK, TypeScript (`@anthropic-ai/claude-agent-sdk`): `query()`, options, message/event types, sessions and resume, permission modes, cwd, token usage reporting, abort/interrupt. Source: https://code.claude.com/docs/en/agent-sdk | M3 (also M2 if the planner uses the SDK rather than the plain API) | ❌ missing |
+| [[claude-agent-sdk]]: `@anthropic-ai/claude-agent-sdk` (TypeScript) | M3, M4 (M2 if the planner uses the SDK) | ✅ fetched 2026-10-21 from code.claude.com and trimmed. Read against 0.3.306. Has a "Gaps" section |

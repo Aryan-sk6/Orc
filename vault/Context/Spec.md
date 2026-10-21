@@ -53,3 +53,15 @@ M5: Integration driver + `orc summarize` + `orc rewind`.
 M6: Dogfood: run orc end-to-end on a tiny sample app (todo app, 2 workstreams) and write a README with real time and token numbers.
 
 Start with M0.
+
+---
+
+## Addendum 2026-10-21 (verbatim from the user)
+
+> M7: The kit. Add a drop-in kit layer on top of the CLI: AGENTS.md/CLAUDE.md orchestrator section (main agent asks 10-15 questions, plans, never codes itself), skills/slash commands /orc-plan, /orc-run, /orc-summarize (planner and summary live here as prompts, not code), driver subagents in .claude/agents/ on a small model, and vault templates. Everything mechanical goes through `orc` CLI commands. Provide an install command (npx degit or an `orc init` that copies the kit into the current folder). Test in a fresh empty project, then in Orca and the VS Code extension.
+>
+> but nevertheless continue with M1.
+
+> 1. Don't wait for me to paste. Fetch the docs yourself from the official pages and save them to vault/docs/claude-agent-sdk.md (trim to what orc needs, don't dump everything): […overview, typescript.md, agent loop, subagents, permissions…] Focus on: query() and options, how to run headless in a given working directory, how to resume a session with a new prompt, permission modes/allowlists, model selection, and how token usage is reported. Note the package name and version you read it against. If anything orc needs isn't in the docs, tell me instead of guessing.
+>
+> 2. Default branch: main. Do NOT push anything yet. Local commits only. I'll create the GitHub repo after M6, once the README has real numbers.
