@@ -7,13 +7,6 @@ export interface ModelConfig {
   readonly model: string;
 }
 
-export interface BudgetConfig {
-  /** Max tokens one task may spend (session + driver) before it is escalated. */
-  readonly perTaskTokens: number;
-  /** Max tokens the whole `orc run` may spend before every session pauses. */
-  readonly perRunTokens: number;
-}
-
 export interface RetryConfig {
   /** Fix attempts per task after failed checks before escalating to decisions.md. */
   readonly maxPerTask: number;
@@ -33,18 +26,17 @@ export interface OrcConfig {
   readonly adapter: AdapterKind;
   readonly planner: ModelConfig;
   readonly driver: ModelConfig;
-  readonly budgets: BudgetConfig;
+  /**
+   * Run-wide spend cap in USD, based on the Agent SDK's client-side cost estimate (`total_cost_usd`).
+   * Each SDK call gets the remaining budget as its `maxBudgetUsd`. Reaching it pauses sessions.
+   */
+  readonly maxBudgetUsd: number;
   readonly retries: RetryConfig;
   readonly checks: readonly CheckCommand[];
 }
 
 export interface ModelConfigInput {
   readonly model?: string | undefined;
-}
-
-export interface BudgetConfigInput {
-  readonly perTaskTokens?: number | undefined;
-  readonly perRunTokens?: number | undefined;
 }
 
 export interface RetryConfigInput {
@@ -63,7 +55,7 @@ export interface OrcConfigInput {
   readonly adapter?: AdapterKind | undefined;
   readonly planner?: ModelConfigInput | undefined;
   readonly driver?: ModelConfigInput | undefined;
-  readonly budgets?: BudgetConfigInput | undefined;
+  readonly maxBudgetUsd?: number | undefined;
   readonly retries?: RetryConfigInput | undefined;
   readonly checks?: readonly CheckCommandInput[] | undefined;
 }

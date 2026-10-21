@@ -7,7 +7,7 @@ currentTask: "T3 Add POST /todos route with validation"
 tasksDone: 2
 tasksTotal: 5
 checks: "typecheck:pass,lint:fail,test:pending,build:pending"
-tokensSpent: 48210
+costUsd: 0.4821
 updated: "2026-10-21 22:41"
 ---
 # Session api

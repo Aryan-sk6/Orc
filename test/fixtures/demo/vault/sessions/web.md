@@ -7,7 +7,7 @@ currentTask: "T2 Todo list component"
 tasksDone: 1
 tasksTotal: 4
 checks: "typecheck:pass,lint:pass,test:pending,build:pending"
-tokensSpent: 31005
+costUsd: 0.0031
 updated: "2026-10-21 22:43"
 ---
 # Session web

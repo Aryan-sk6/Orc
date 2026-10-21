@@ -65,7 +65,7 @@ Planned (not created yet):
   src/agents/             M3: adapter.ts (AgentAdapter), fake.ts (FakeAgentAdapter), claude-sdk.ts
   src/git/                M3: worktrees, branches, checkpoint tags
   src/checks/             M4: run check commands, parse results
-  src/driver/             M4: driver loop, budgets, retries, escalation
+  src/driver/             M4: driver loop, USD run cap (SDK maxBudgetUsd), retries, escalation
   src/integration/        M5: integration driver
   src/summarize/          M5: orc summarize
 ```
@@ -84,7 +84,7 @@ Planned (not created yet):
 ## Patterns
 
 - **File naming:** kebab-case files, camelCase functions, PascalCase types with no `I` prefix. Don't write barrel `index.ts` re-exports, import from the specific file. The exception is `src/cli/index.ts`, which is the bin.
-- **Validation:** hand-written validators in the `config/validate.ts` style. Reject unknown keys, report every issue (not just the first) with a dotted path such as `budgets.perTaskTokens`, then merge with defaults. Arrays from user input replace defaults; they are not merged.
+- **Validation:** hand-written validators in the `config/validate.ts` style. Reject unknown keys, report every issue (not just the first) with a dotted path such as `retries.maxPerTask`, then merge with defaults. Arrays from user input replace defaults; they are not merged.
 - **Index signatures:** read them with brackets (`raw["checks"]`), as `noPropertyAccessFromIndexSignature` requires. Biome's `useLiteralKeys` is off because it conflicts with that setting.
 - **Results vs. throws:** validators return `{ ok: true, value } | { ok: false, issues }`. Loaders and commands throw `OrcError`.
 - **Tests:** colocate them as `foo.test.ts` next to `foo.ts`. Use `test/fixtures/` for static files and `fs.mkdtemp(os.tmpdir())` for anything written, cleaned up in `afterEach`. Assert behaviour, not implementation.

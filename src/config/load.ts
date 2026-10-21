@@ -3,12 +3,7 @@ import { dirname, resolve } from "node:path";
 import { errorCode, errorMessage, OrcError } from "../core/errors.js";
 import { DEFAULT_CHECK_TIMEOUT_MS, DEFAULT_CONFIG } from "./defaults.js";
 import type { OrcConfig, OrcConfigInput } from "./types.js";
-import {
-  type ConfigIssue,
-  type ValidationResult,
-  validateConfigInput,
-  validateResolvedConfig,
-} from "./validate.js";
+import { type ConfigIssue, type ValidationResult, validateConfigInput } from "./validate.js";
 
 export const CONFIG_FILENAME = "orc.config.json";
 
@@ -65,12 +60,7 @@ export async function loadConfig(options: LoadConfigOptions): Promise<LoadedConf
 /** Validates already-parsed JSON and merges defaults. Pure; no I/O. */
 export function parseConfig(raw: unknown): ValidationResult<OrcConfig> {
   const input = validateConfigInput(raw);
-  if (!input.ok) {
-    return input;
-  }
-  const config = resolveConfig(input.value);
-  const issues = validateResolvedConfig(config);
-  return issues.length === 0 ? { ok: true, value: config } : { ok: false, issues };
+  return input.ok ? { ok: true, value: resolveConfig(input.value) } : input;
 }
 
 export function resolveConfig(
@@ -82,10 +72,7 @@ export function resolveConfig(
     adapter: input.adapter ?? defaults.adapter,
     planner: { model: input.planner?.model ?? defaults.planner.model },
     driver: { model: input.driver?.model ?? defaults.driver.model },
-    budgets: {
-      perTaskTokens: input.budgets?.perTaskTokens ?? defaults.budgets.perTaskTokens,
-      perRunTokens: input.budgets?.perRunTokens ?? defaults.budgets.perRunTokens,
-    },
+    maxBudgetUsd: input.maxBudgetUsd ?? defaults.maxBudgetUsd,
     retries: { maxPerTask: input.retries?.maxPerTask ?? defaults.retries.maxPerTask },
     checks:
       input.checks?.map((check) => ({

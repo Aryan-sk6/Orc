@@ -6,6 +6,7 @@ import { vaultPaths } from "../../vault/layout.js";
 import {
   type CheckSummary,
   readSessionNotes,
+  roundUsd,
   type SessionState,
 } from "../../vault/session-note.js";
 import { parseCommandArgs } from "../args.js";
@@ -17,17 +18,21 @@ export interface StatusReport {
   readonly sessions: readonly SessionState[];
   readonly invalidNotes: readonly { readonly file: string; readonly problems: readonly string[] }[];
   readonly openDecisions: number;
-  readonly tokensSpent: number;
-  readonly perRunTokens: number;
+  /** Sum of the sessions' `costUsd`: an estimate from the Agent SDK, not billing data. */
+  readonly costUsd: number;
+  readonly maxBudgetUsd: number;
 }
 
 export const statusCommand: Command = {
   name: "status",
-  summary: "Show each session's status, current task, checks and tokens spent",
+  summary: "Show each session's status, current task, checks and estimated spend",
   help: `Usage: orc status [--json]
 
 Reads <vault>/sessions/*.md and <vault>/decisions.md. Nothing is cached:
 the vault is the only source of truth.
+
+Spend is the Agent SDK's client-side estimate (total_cost_usd per call),
+not billing data. Check the Claude Console for actual billing.
 
 Options:
   --json    Print the report as JSON
@@ -35,7 +40,7 @@ Options:
   run: async (argv, io) => {
     const { values } = parseCommandArgs(argv, { json: { type: "boolean" } });
     const loaded = await loadConfig({ cwd: io.cwd, path: values.config });
-    const report = await buildStatusReport(loaded.vaultPath, loaded.config.budgets.perRunTokens);
+    const report = await buildStatusReport(loaded.vaultPath, loaded.config.maxBudgetUsd);
 
     if (values.json === true) {
       io.stdout(`${JSON.stringify(report, null, 2)}\n`);
@@ -51,7 +56,7 @@ Options:
 
 export async function buildStatusReport(
   vaultPath: string,
-  perRunTokens: number,
+  maxBudgetUsd: number,
 ): Promise<StatusReport> {
   await assertDirectory(vaultPath);
   const paths = vaultPaths(vaultPath);
@@ -71,8 +76,8 @@ export async function buildStatusReport(
     sessions,
     invalidNotes,
     openDecisions: decisions.filter((decision) => decision.status === "open").length,
-    tokensSpent: sessions.reduce((sum, session) => sum + session.tokensSpent, 0),
-    perRunTokens,
+    costUsd: roundUsd(sessions.reduce((sum, session) => sum + session.costUsd, 0)),
+    maxBudgetUsd,
   };
 }
 
@@ -87,7 +92,7 @@ export function renderStatus(report: StatusReport): string {
       { header: "TASK", maxWidth: 40 },
       { header: "DONE", align: "right" },
       { header: "CHECKS" },
-      { header: "TOKENS", align: "right" },
+      { header: "COST", align: "right" },
       { header: "UPDATED" },
     ],
     report.sessions.map((session) => [
@@ -96,20 +101,28 @@ export function renderStatus(report: StatusReport): string {
       session.currentTask ?? "-",
       `${session.tasksDone}/${session.tasksTotal}`,
       formatChecksCell(session.checks),
-      formatNumber(session.tokensSpent),
+      formatUsd(session.costUsd),
       session.updated,
     ]),
   );
-  const share = report.perRunTokens > 0 ? (report.tokensSpent / report.perRunTokens) * 100 : 0;
+  const share = (report.costUsd / report.maxBudgetUsd) * 100;
   const decisions =
     report.openDecisions === 0
       ? "Open decisions: 0"
       : `Open decisions: ${report.openDecisions} (see decisions.md)`;
   return (
     `${table}\n\n` +
-    `Tokens: ${formatNumber(report.tokensSpent)} of ${formatNumber(report.perRunTokens)} run cap ` +
-    `(${share.toFixed(1)}%)\n${decisions}\n`
+    `Spend: ${formatUsd(report.costUsd)} of ${formatUsd(report.maxBudgetUsd)} run cap ` +
+    `(${share.toFixed(1)}%), estimated by the Agent SDK, not billing data\n${decisions}\n`
   );
+}
+
+/** `$1.23`; amounts that would round to $0.00 show as `<$0.01` so cheap driver calls stay visible. */
+export function formatUsd(value: number): string {
+  if (value > 0 && value < 0.005) {
+    return "<$0.01";
+  }
+  return `$${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 /** "-" before any check ran, "fail: lint, test" when something failed, otherwise "3/4 pass". */
@@ -123,10 +136,6 @@ export function formatChecksCell(checks: readonly CheckSummary[]): string {
   }
   const passed = checks.filter((check) => check.status === "pass").length;
   return `${passed}/${checks.length} pass`;
-}
-
-function formatNumber(value: number): string {
-  return value.toLocaleString("en-US");
 }
 
 async function assertDirectory(path: string): Promise<void> {

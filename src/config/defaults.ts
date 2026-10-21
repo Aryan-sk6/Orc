@@ -14,7 +14,7 @@ export const DEFAULT_CONFIG: OrcConfig = {
   adapter: "claude-agent-sdk",
   planner: { model: "claude-opus-5-5" },
   driver: { model: "claude-haiku-5-5" },
-  budgets: { perTaskTokens: 500_000, perRunTokens: 10_000_000 },
+  maxBudgetUsd: 20,
   retries: { maxPerTask: 2 },
   checks: DEFAULT_CHECKS,
 };
