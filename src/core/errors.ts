@@ -1,4 +1,9 @@
-export type OrcErrorCode = "USAGE";
+export type OrcErrorCode =
+  | "USAGE"
+  | "CONFIG_NOT_FOUND"
+  | "CONFIG_UNREADABLE"
+  | "CONFIG_INVALID_JSON"
+  | "CONFIG_INVALID";
 
 /** Expected failure with a stable code. Only src/cli/ turns these into output and exit codes. */
 export class OrcError extends Error {

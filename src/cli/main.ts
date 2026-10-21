@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
+import { loadConfig } from "../config/load.js";
 import { errorCode, errorMessage, OrcError } from "../core/errors.js";
 
 /** Everything the CLI touches in the outside world, injected so tests can capture it. */
@@ -15,11 +16,12 @@ Usage:
   orc <command> [options]
 
 Commands:
-  (none yet; see vault/Context/Roadmap.md)
+  config    Print the resolved config (orc.config.json merged with defaults)
 
 Options:
-  -h, --help       Show this help
-  -v, --version    Show the orc version
+  -c, --config <path>    Config file (default: ./orc.config.json)
+  -h, --help             Show this help
+  -v, --version          Show the orc version
 `;
 
 /** Runs the CLI and returns the process exit code. Never calls process.exit. */
@@ -52,7 +54,15 @@ async function run(argv: readonly string[], io: CliIO): Promise<number> {
     return 0;
   }
 
-  throw new OrcError("USAGE", `unknown command "${command}". Run "orc --help".`);
+  switch (command) {
+    case "config": {
+      const loaded = await loadConfig({ cwd: io.cwd, path: values.config });
+      io.stdout(`${JSON.stringify(loaded, null, 2)}\n`);
+      return 0;
+    }
+    default:
+      throw new OrcError("USAGE", `unknown command "${command}". Run "orc --help".`);
+  }
 }
 
 function parseCliArgs(argv: readonly string[]) {
@@ -62,6 +72,7 @@ function parseCliArgs(argv: readonly string[]) {
       allowPositionals: true,
       strict: true,
       options: {
+        config: { type: "string", short: "c" },
         help: { type: "boolean", short: "h" },
         version: { type: "boolean", short: "v" },
       },
