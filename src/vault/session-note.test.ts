@@ -30,7 +30,7 @@ const STATE: SessionState = {
     { name: "typecheck", status: "pass" },
     { name: "lint", status: "fail" },
   ],
-  tokensSpent: 48_210,
+  costUsd: 0.4821,
   updated: "2026-10-21 22:05",
 };
 
@@ -55,7 +55,7 @@ describe("session state <-> frontmatter", () => {
       status: "exploding",
       tasksDone: 6,
       tasksTotal: 5,
-      tokensSpent: -1,
+      costUsd: -1,
       checks: "lint:maybe",
     });
     expect(result.ok).toBe(false);
@@ -66,7 +66,7 @@ describe("session state <-> frontmatter", () => {
         "updated",
         "status",
         "tasksDone",
-        "tokensSpent",
+        "costUsd",
         "checks",
       ]);
     }
@@ -104,11 +104,11 @@ describe("writeSessionState", () => {
       .replace("## Problems\n", "## Problems\n- hand-written note\n");
     await writeFile(file, edited);
 
-    await writeSessionState(paths, { ...STATE, status: "checking", tokensSpent: 50_000 });
+    await writeSessionState(paths, { ...STATE, status: "checking", costUsd: 0.1 + 0.2 });
     const parsed = parseFrontmatter(await readFile(file, "utf8"));
     expect(parsed.data["aliases"]).toBe("api-session");
     expect(parsed.data["status"]).toBe("checking");
-    expect(parsed.data["tokensSpent"]).toBe(50_000);
+    expect(parsed.data["costUsd"]).toBe(0.3); // rounded to 4 decimals, no float noise
     expect(parsed.body).toContain("- hand-written note");
   });
 

@@ -7,7 +7,7 @@ currentTask: "T2 Session cookies"
 tasksDone: 1
 tasksTotal: 3
 checks: "typecheck:pass,lint:pass,test:fail,build:pending"
-tokensSpent: 152340
+costUsd: 1.6234
 updated: "2026-10-21 22:38"
 ---
 # Session auth

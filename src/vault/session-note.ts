@@ -40,7 +40,11 @@ export interface SessionState {
   readonly tasksTotal: number;
   /** Latest result per check command, in run order. */
   readonly checks: readonly CheckSummary[];
-  readonly tokensSpent: number;
+  /**
+   * Estimated USD spent by this session (coding turns + its driver), summed from the Agent SDK's
+   * per-call `total_cost_usd`. An estimate, not billing data.
+   */
+  readonly costUsd: number;
   /** `YYYY-MM-DD HH:mm`, local time. */
   readonly updated: string;
 }
@@ -70,9 +74,14 @@ export function sessionStateToFrontmatter(state: SessionState): FrontmatterData 
     tasksDone: state.tasksDone,
     tasksTotal: state.tasksTotal,
     checks: formatChecks(state.checks),
-    tokensSpent: state.tokensSpent,
+    costUsd: roundUsd(state.costUsd),
     updated: state.updated,
   };
+}
+
+/** Four decimals keeps sub-cent driver calls visible without float noise like 0.30000000000000004. */
+export function roundUsd(value: number): number {
+  return Math.round(value * 10_000) / 10_000;
 }
 
 /** Validates frontmatter read back from disk (it may have been hand-edited in Obsidian). */
@@ -112,14 +121,22 @@ export function sessionStateFromFrontmatter(data: FrontmatterData): SessionNoteR
   if (tasksDone > tasksTotal) {
     problems.push("tasksDone: must not exceed tasksTotal");
   }
-  const tokensSpent = count("tokensSpent");
+  const costUsd = data["costUsd"];
+  if (typeof costUsd !== "number" || !Number.isFinite(costUsd) || costUsd < 0) {
+    problems.push("costUsd: must be a number >= 0");
+  }
   const checksText = data["checks"] ?? "";
   const checks = typeof checksText === "string" ? parseChecks(checksText) : null;
   if (checks === null) {
     problems.push(`checks: expected "name:${CHECK_STATUSES.join("|")}, ..."`);
   }
 
-  if (problems.length > 0 || !isOneOf(SESSION_STATUSES, status) || checks === null) {
+  if (
+    problems.length > 0 ||
+    !isOneOf(SESSION_STATUSES, status) ||
+    checks === null ||
+    typeof costUsd !== "number"
+  ) {
     return { ok: false, problems };
   }
   return {
@@ -133,7 +150,7 @@ export function sessionStateFromFrontmatter(data: FrontmatterData): SessionNoteR
       tasksDone,
       tasksTotal,
       checks,
-      tokensSpent,
+      costUsd,
       updated,
     },
   };

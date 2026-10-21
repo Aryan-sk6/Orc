@@ -1,7 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
-import { DEFAULT_CONFIG } from "./defaults.js";
-import { type ConfigIssue, validateConfigInput, validateResolvedConfig } from "./validate.js";
+import { type ConfigIssue, validateConfigInput } from "./validate.js";
 
 const FIXTURES = new URL("../../test/fixtures/configs/", import.meta.url);
 
@@ -43,8 +42,8 @@ describe("validateConfigInput", () => {
         "vaultDir",
         "adapter",
         "planner",
-        "budgets.perTaskTokens",
-        "budgets.perRunTokns",
+        "maxBudgetUsd",
+        "budgets",
         "retries.maxPerTask",
         "checks[1].name",
         "checks[1].command",
@@ -75,30 +74,28 @@ describe("validateConfigInput", () => {
     ]);
   });
 
-  it("rejects non-integer, unsafe, and below-minimum numbers", () => {
-    for (const bad of [0, -1, 1.5, "100", Number.MAX_SAFE_INTEGER + 1]) {
-      expect(issuePaths({ budgets: { perRunTokens: bad } })).toEqual(["budgets.perRunTokens"]);
+  it("rejects non-integer, unsafe, and below-minimum counts", () => {
+    for (const bad of [-1, 1.5, "2", Number.MAX_SAFE_INTEGER + 1]) {
+      expect(issuePaths({ retries: { maxPerTask: bad } })).toEqual(["retries.maxPerTask"]);
     }
     expect(issuePaths({ retries: { maxPerTask: 0 } })).toEqual([]);
+  });
+
+  it("requires maxBudgetUsd to be a finite number > 0 (the SDK rejects 0)", () => {
+    for (const bad of [0, -5, "20", Number.POSITIVE_INFINITY, null]) {
+      expect(issuePaths({ maxBudgetUsd: bad })).toEqual(["maxBudgetUsd"]);
+    }
+    expect(issuePaths({ maxBudgetUsd: 0.5 })).toEqual([]);
+  });
+
+  it("rejects the removed token budgets as unknown keys", () => {
+    expect(issuePaths({ budgets: { perRunTokens: 100 } })).toEqual(["budgets"]);
   });
 
   it("rejects blank strings", () => {
     expect(issuePaths({ vaultDir: "  ", planner: { model: "" } })).toEqual([
       "vaultDir",
       "planner.model",
-    ]);
-  });
-});
-
-describe("validateResolvedConfig", () => {
-  it("passes the defaults", () => {
-    expect(validateResolvedConfig(DEFAULT_CONFIG)).toEqual([]);
-  });
-
-  it("rejects a per-task budget larger than the per-run budget", () => {
-    const config = { ...DEFAULT_CONFIG, budgets: { perTaskTokens: 11, perRunTokens: 10 } };
-    expect(validateResolvedConfig(config)).toEqual([
-      { path: "budgets.perTaskTokens", message: "must not exceed budgets.perRunTokens (10)" },
     ]);
   });
 });

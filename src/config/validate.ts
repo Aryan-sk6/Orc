@@ -3,12 +3,11 @@ import {
   type AdapterKind,
   type CheckCommandInput,
   type ModelConfigInput,
-  type OrcConfig,
   type OrcConfigInput,
 } from "./types.js";
 
 export interface ConfigIssue {
-  /** Dotted path to the offending value, e.g. "budgets.perTaskTokens" or "checks[1].name". "" is the root. */
+  /** Dotted path to the offending value, e.g. "retries.maxPerTask" or "checks[1].name". "" is the root. */
   readonly path: string;
   readonly message: string;
 }
@@ -24,12 +23,11 @@ const TOP_LEVEL_KEYS = [
   "adapter",
   "planner",
   "driver",
-  "budgets",
+  "maxBudgetUsd",
   "retries",
   "checks",
 ] as const;
 const MODEL_KEYS = ["model"] as const;
-const BUDGET_KEYS = ["perTaskTokens", "perRunTokens"] as const;
 const RETRY_KEYS = ["maxPerTask"] as const;
 const CHECK_KEYS = ["name", "command", "timeoutMs"] as const;
 
@@ -43,7 +41,6 @@ export function validateConfigInput(raw: unknown): ValidationResult<OrcConfigInp
 
   const planner = readSection(raw, "planner", MODEL_KEYS, "", issues);
   const driver = readSection(raw, "driver", MODEL_KEYS, "", issues);
-  const budgets = readSection(raw, "budgets", BUDGET_KEYS, "", issues);
   const retries = readSection(raw, "retries", RETRY_KEYS, "", issues);
 
   const value: OrcConfigInput = {
@@ -51,10 +48,7 @@ export function validateConfigInput(raw: unknown): ValidationResult<OrcConfigInp
     adapter: readAdapter(raw, issues),
     planner: planner && readModel(planner, "planner", issues),
     driver: driver && readModel(driver, "driver", issues),
-    budgets: budgets && {
-      perTaskTokens: readInteger(budgets, "perTaskTokens", 1, "budgets", issues),
-      perRunTokens: readInteger(budgets, "perRunTokens", 1, "budgets", issues),
-    },
+    maxBudgetUsd: readPositiveNumber(raw, "maxBudgetUsd", "", issues),
     retries: retries && {
       maxPerTask: readInteger(retries, "maxPerTask", 0, "retries", issues),
     },
@@ -62,18 +56,6 @@ export function validateConfigInput(raw: unknown): ValidationResult<OrcConfigInp
   };
 
   return issues.length === 0 ? { ok: true, value } : { ok: false, issues };
-}
-
-/** Rules that span fields, checked after defaults are merged in. */
-export function validateResolvedConfig(config: OrcConfig): readonly ConfigIssue[] {
-  const issues: ConfigIssue[] = [];
-  if (config.budgets.perTaskTokens > config.budgets.perRunTokens) {
-    issues.push({
-      path: "budgets.perTaskTokens",
-      message: `must not exceed budgets.perRunTokens (${config.budgets.perRunTokens})`,
-    });
-  }
-  return issues;
 }
 
 function readModel(section: JsonObject, path: string, issues: ConfigIssue[]): ModelConfigInput {
@@ -180,6 +162,24 @@ function readInteger(
   }
   if (typeof value !== "number" || !Number.isSafeInteger(value) || value < min) {
     issues.push({ path: joinPath(parentPath, key), message: `must be an integer >= ${min}` });
+    return undefined;
+  }
+  return value;
+}
+
+/** A finite number > 0. The SDK rejects a budget of 0, so 0 is invalid here too. */
+function readPositiveNumber(
+  parent: JsonObject,
+  key: string,
+  parentPath: string,
+  issues: ConfigIssue[],
+): number | undefined {
+  const value = parent[key];
+  if (value === undefined) {
+    return undefined;
+  }
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+    issues.push({ path: joinPath(parentPath, key), message: "must be a number > 0" });
     return undefined;
   }
   return value;

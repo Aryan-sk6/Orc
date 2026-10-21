@@ -40,15 +40,11 @@ describe("parseConfig", () => {
   it("merges a partial config over the defaults", () => {
     const result = parseConfig({
       driver: { model: "claude-sonnet-5-5" },
-      budgets: { perTaskTokens: 1000 },
+      maxBudgetUsd: 7.5,
     });
     expect(result).toEqual({
       ok: true,
-      value: {
-        ...DEFAULT_CONFIG,
-        driver: { model: "claude-sonnet-5-5" },
-        budgets: { perTaskTokens: 1000, perRunTokens: DEFAULT_CONFIG.budgets.perRunTokens },
-      },
+      value: { ...DEFAULT_CONFIG, driver: { model: "claude-sonnet-5-5" }, maxBudgetUsd: 7.5 },
     });
   });
 
@@ -62,14 +58,6 @@ describe("parseConfig", () => {
   it("allows an empty checks list", () => {
     const result = parseConfig({ checks: [] });
     expect(result.ok && result.value.checks).toEqual([]);
-  });
-
-  it("checks cross-field rules against merged values", () => {
-    const result = parseConfig({ budgets: { perTaskTokens: 20_000_000 } });
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.issues.map((issue) => issue.path)).toEqual(["budgets.perTaskTokens"]);
-    }
   });
 });
 

@@ -7,7 +7,7 @@ currentTask: null
 tasksDone: 3
 tasksTotal: 3
 checks: "typecheck:pass,lint:pass,test:pass,build:pass"
-tokensSpent: 27770
+costUsd: 0.2777
 updated: "2026-10-21 22:20"
 ---
 # Session db
