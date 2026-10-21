@@ -70,6 +70,7 @@ export function resolveConfig(
   return {
     vaultDir: input.vaultDir ?? defaults.vaultDir,
     adapter: input.adapter ?? defaults.adapter,
+    fakeScript: input.fakeScript ?? defaults.fakeScript,
     planner: { model: input.planner?.model ?? defaults.planner.model },
     driver: { model: input.driver?.model ?? defaults.driver.model },
     maxBudgetUsd: input.maxBudgetUsd ?? defaults.maxBudgetUsd,

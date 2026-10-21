@@ -6,7 +6,17 @@ export type OrcErrorCode =
   | "CONFIG_INVALID"
   | "INVALID_SESSION_NAME"
   | "INVALID_LOG_ENTRY"
-  | "VAULT_NOT_FOUND";
+  | "VAULT_NOT_FOUND"
+  | "ADAPTER_UNAVAILABLE"
+  | "FAKE_SCRIPT_INVALID"
+  | "FAKE_SCRIPT_EXHAUSTED"
+  | "FAKE_SCRIPT_MISMATCH"
+  | "AGENT_FAILED"
+  | "BUDGET_EXCEEDED"
+  | "IDEA_NOT_FOUND"
+  | "PLAN_EXISTS"
+  | "PLAN_INVALID"
+  | "PROMPT_NOT_FOUND";
 
 /** Expected failure with a stable code. Only src/cli/ turns these into output and exit codes. */
 export class OrcError extends Error {
