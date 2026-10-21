@@ -147,7 +147,7 @@ Evaluation order is hooks → deny rules → ask rules → **mode** → allow ru
 - Limits: env `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` (default 3), `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS` (default 20), and `maxBudgetUsd` (includes subagent spend).
 - A new `.claude/agents/` **directory** created mid-session isn't picked up until restart. A new file in an existing directory is picked up within seconds.
 
-## Gaps and judgement calls (to raise with the user, not guess)
-1. **No hard token cap.** The only enforced spend cap is `maxBudgetUsd`, in USD and estimated. `taskBudget` is alpha and advisory. orc's `perTaskTokens`/`perRunTokens` therefore have to be enforced **by orc** between turns using `modelUsage` deltas, or mid-turn by aborting on assistant-message input usage, which undercounts output. One option is also passing a derived `maxBudgetUsd` as a hard backstop.
-2. **Auth.** The docs bar third-party products from offering claude.ai login. orc should require `ANTHROPIC_API_KEY` (or a cloud provider) and say so in `check-setup`.
-3. The docs list type names (`SDKMessage`, `Options`, `SDKResultMessage`, `ModelUsage`), but whether each is **exported** from the package root has to be confirmed against the installed `.d.ts` in M3.
+## Gaps and judgement calls
+1. ~~**No hard token cap.**~~ **Resolved:** orc does no token accounting. The run cap is `maxBudgetUsd` (USD, estimated) plus the retry cap. Per-turn cost is the delta of `total_cost_usd`. See [[0006-usd-run-cap-no-token-accounting]].
+2. ~~**Auth.**~~ **Resolved:** `ANTHROPIC_API_KEY` is required, and `check-setup` verifies it. See [[0007-shared-planner-prompt-and-api-key]].
+3. **Still open (M3).** The docs list type names (`SDKMessage`, `Options`, `SDKResultMessage`, `ModelUsage`), but whether each is **exported** from the package root has to be confirmed against the installed `.d.ts` in M3.

@@ -9,7 +9,7 @@ tags: [decision, vault]
 `orc status` needs, for each session, the status, current task, check results and tokens spent. The spec says drivers communicate **only through the vault**, and the vault has to stay plain markdown that works in Obsidian.
 
 ## Decision
-- Each `sessions/<name>.md` carries its machine state as **flat frontmatter**: `session, workstream, branch, status, currentTask, tasksDone, tasksTotal, checks, tokensSpent, updated`. The body holds the human-readable `## Progress / ## Problems / ## Decisions` sections.
+- Each `sessions/<name>.md` carries its machine state as **flat frontmatter**: `session, workstream, branch, status, currentTask, tasksDone, tasksTotal, checks, costUsd, updated`. Until [[0006-usd-run-cap-no-token-accounting]] this was `tokensSpent`. The body holds the human-readable `## Progress / ## Problems / ## Decisions` sections.
 - `checks` is one scalar, `"typecheck:pass,lint:fail,…"`, so the frontmatter stays flat and orc needs no YAML library. Our own parser handles `key: scalar` only.
 - `orc status` reads **only** the vault. There's no hidden state file or cache.
 - Updates rewrite the frontmatter and keep the body plus any extra keys a human added in Obsidian, such as `aliases` or `tags`.

@@ -1,6 +1,6 @@
 ---
 date: 2026-10-21
-status: accepted (defaults reversible)
+status: partly superseded by [[0006-usd-run-cap-no-token-accounting]] (token caps removed)
 tags: [decision, config]
 ---
 # 0003: `orc.config.json` shape and defaults

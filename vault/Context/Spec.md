@@ -65,3 +65,11 @@ Start with M0.
 > 1. Don't wait for me to paste. Fetch the docs yourself from the official pages and save them to vault/docs/claude-agent-sdk.md (trim to what orc needs, don't dump everything): […overview, typescript.md, agent loop, subagents, permissions…] Focus on: query() and options, how to run headless in a given working directory, how to resume a session with a new prompt, permission modes/allowlists, model selection, and how token usage is reported. Note the package name and version you read it against. If anything orc needs isn't in the docs, tell me instead of guessing.
 >
 > 2. Default branch: main. Do NOT push anything yet. Local commits only. I'll create the GitHub repo after M6, once the README has real numbers.
+
+## Addendum 2026-10-21 (2) (verbatim from the user)
+
+> 1. Simplify budgets. Drop perTaskTokens/perRunTokens enforcement. Use maxBudgetUsd as the run cap plus the retry cap, and report spend in orc status (use per-turn cost from the SDK if it provides it, otherwise say so). No custom token accounting.
+> 2. Yes: require ANTHROPIC_API_KEY, and have check-setup verify it.
+> 3. Agreed on the planner: one planner prompt file, run via AgentAdapter for `orc plan` and reused by /orc-plan. Move AgentAdapter and FakeAgentAdapter into M2. Keep M7 scoped as written.
+
+These override the original "Hard rules" bullet on token caps: the config now has `maxBudgetUsd` and the retry cap, with no token caps. See [[0006-usd-run-cap-no-token-accounting]] and [[0007-shared-planner-prompt-and-api-key]].

@@ -61,8 +61,8 @@ test/
 vault/                    project memory for developing orc (Obsidian). NOT the target vault.
 
 Planned (not created yet):
-  src/planner/            M2: orc plan, orc check-setup
-  src/agents/             M3: adapter.ts (AgentAdapter), fake.ts (FakeAgentAdapter), claude-sdk.ts
+  src/planner/            M2: orc plan (shared planner prompt file, also used by M7 /orc-plan), orc check-setup
+  src/agents/             M2: adapter.ts (AgentAdapter), fake.ts (FakeAgentAdapter); M3: claude-sdk.ts
   src/git/                M3: worktrees, branches, checkpoint tags
   src/checks/             M4: run check commands, parse results
   src/driver/             M4: driver loop, USD run cap (SDK maxBudgetUsd), retries, escalation
