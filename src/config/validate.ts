@@ -21,6 +21,7 @@ type JsonObject = Readonly<Record<string, unknown>>;
 const TOP_LEVEL_KEYS = [
   "vaultDir",
   "adapter",
+  "fakeScript",
   "planner",
   "driver",
   "maxBudgetUsd",
@@ -46,6 +47,7 @@ export function validateConfigInput(raw: unknown): ValidationResult<OrcConfigInp
   const value: OrcConfigInput = {
     vaultDir: readString(raw, "vaultDir", "", issues),
     adapter: readAdapter(raw, issues),
+    fakeScript: readString(raw, "fakeScript", "", issues),
     planner: planner && readModel(planner, "planner", issues),
     driver: driver && readModel(driver, "driver", issues),
     maxBudgetUsd: readPositiveNumber(raw, "maxBudgetUsd", "", issues),

@@ -24,6 +24,8 @@ export interface OrcConfig {
   /** Target app vault, relative to the config file's directory. */
   readonly vaultDir: string;
   readonly adapter: AdapterKind;
+  /** Scripted outputs for the "fake" adapter, relative to the config file's directory. */
+  readonly fakeScript: string;
   readonly planner: ModelConfig;
   readonly driver: ModelConfig;
   /**
@@ -53,6 +55,7 @@ export interface CheckCommandInput {
 export interface OrcConfigInput {
   readonly vaultDir?: string | undefined;
   readonly adapter?: AdapterKind | undefined;
+  readonly fakeScript?: string | undefined;
   readonly planner?: ModelConfigInput | undefined;
   readonly driver?: ModelConfigInput | undefined;
   readonly maxBudgetUsd?: number | undefined;
