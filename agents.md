@@ -8,7 +8,7 @@ This is the guide for any coding agent working on **orc**, a TypeScript CLI that
 - **TypeScript 7** in strict mode with extra strictness (see `tsconfig.json`). It uses `NodeNext` modules, so relative imports end in `.js`.
 - **`node:util` `parseArgs`** handles CLI argument parsing. No CLI framework.
 - **Vitest 4** runs the tests. It's pinned below v5 because v5 drops Node 20.
-- **Biome 2** does linting and formatting in one tool. `noExplicitAny` and `noNonNullAssertion` are errors.
+- **Biome 2** does linting and formatting in one tool. `noExplicitAny` and `noNonNullAssertion` are errors. It skips `*.md`: its Markdown formatter rewrites frontmatter, even inside fenced blocks.
 - **`@anthropic-ai/claude-agent-sdk`** comes in M3 and may only be used inside `src/agents/claude-sdk.ts`. Read `vault/docs/claude-agent-sdk.md` before touching it.
 - **Runtime dependencies: none.** Adding one needs a decision note in `vault/Decisions/`.
 
@@ -21,6 +21,8 @@ npm run format      # biome check --write
 npm test            # vitest run
 npm run build       # tsc -p tsconfig.build.json → dist/
 npm run check       # typecheck + lint + test (run before every commit)
+npm run demo:status # orc status on the fake demo vault
+npm run demo:plan   # orc plan on the todo fixture with the fake adapter (writes .demo/, gitignored)
 node dist/cli/index.js --help
 ```
 
@@ -30,16 +32,19 @@ node dist/cli/index.js --help
 agents.md                 this file
 CLAUDE.md                 pointer for Claude Code sessions
 orc.config.example.json   every config key with its default
+kit/                      ships in the npm package; M7 adds the rest of the kit here
+  prompts/planner.md      THE planner prompt, shared by `orc plan` and M7's /orc-plan. Says WHAT to produce.
 src/
   cli/
     index.ts              bin entry (shebang); calls main() and sets the exit code. No logic here.
     main.ts               argv → command dispatch, global help/version, OrcError → exit code
-    io.ts                 CliIO: cwd, now(), stdout, stderr (injected so tests capture them)
+    io.ts                 CliIO: cwd, now(), env, stdout, stderr, readLine (injected so tests capture them)
+    terminal.ts           lazy readline LineReader for stdin (null at EOF, works piped)
     args.ts               GLOBAL_OPTIONS, splitCommandLine, parseCommandArgs (strict, typed per command)
     command.ts            Command interface: name, summary, help, run(argv, io)
     registry.ts           COMMANDS list; add new commands here
     table.ts              renderTable for terminal tables
-    commands/             one file per command: status.ts, log.ts, config.ts (+ *.test.ts)
+    commands/             one file per command: plan, check-setup, status, log, config (+ *.test.ts)
   config/
     types.ts              OrcConfig and OrcConfigInput interfaces
     defaults.ts           DEFAULT_CONFIG and DEFAULT_CHECK_TIMEOUT_MS
@@ -48,6 +53,17 @@ src/
   core/
     errors.ts             OrcError(code, message, details), errorCode(), errorMessage()
     fs.ts                 readFileIfExists, writeFileAtomic, writeFileIfMissing, KeyedMutex
+    env-file.ts           minimal .env parser for presence checks
+  agents/
+    adapter.ts            AgentAdapter: runTurn(request) → {sessionId, outcome, text, costUsd per turn}, close(). No SDK imports.
+    fake.ts               FakeAgentAdapter: replays FakeTurn[] in order, records requests, `expect` guards prompts
+    fake-script.ts        loads a JSON fake script (config `fakeScript`); `textFile` for long replies
+    create.ts             createAdapter(loadedConfig): "fake" now, "claude-agent-sdk" in M3
+  planner/                the only LLM caller so far (besides M4's driver)
+    planner.ts            runPlanner: questions turn → ask user → plan turn (resumed) → validate → repair → write
+    prompts.ts            loads kit/prompts/planner.md; builds the per-turn prompts
+    protocol.ts           CLI-only reply formats: questions JSON, <<<orc-file path="…">>> blocks, path safety
+    check-setup.ts        deterministic: API key, plan env vars (env/.env.local/.env), docs present
   vault/                  the TARGET app's vault (what orc reads/writes at runtime)
     layout.ts             VAULT_LAYOUT names, vaultPaths(), session-name rules
     frontmatter.ts        flat key: scalar frontmatter parse/serialize
@@ -55,14 +71,14 @@ src/
     session-note.ts       SessionState frontmatter + Progress/Problems/Decisions sections
     decisions.ts          numbered escalations in decisions.md
     init.ts               ensureVault: create layout + seed files, never overwrite
+    plan.ts               plan format: parse setup/docs-needed/workstreams, validate task graph, render task-graph.md
 test/
-  helpers/                tmp-dir.ts (useTmpDir, localTime), cli.ts (captureIO)
-  fixtures/               configs/, demo/ (fake vault for `orc status`; npm run demo:status)
+  helpers/                tmp-dir.ts (useTmpDir, localTime), cli.ts (captureIO with env + scripted stdin), plan.ts
+  fixtures/               configs/, demo/ (fake vault for `orc status`), planner/ (todo idea, fake script, replies)
 vault/                    project memory for developing orc (Obsidian). NOT the target vault.
 
 Planned (not created yet):
-  src/planner/            M2: orc plan (shared planner prompt file, also used by M7 /orc-plan), orc check-setup
-  src/agents/             M2: adapter.ts (AgentAdapter), fake.ts (FakeAgentAdapter); M3: claude-sdk.ts
+  src/agents/             M3: claude-sdk.ts (maps AgentAccess to permission modes, cost delta from total_cost_usd)
   src/git/                M3: worktrees, branches, checkpoint tags
   src/checks/             M4: run check commands, parse results
   src/driver/             M4: driver loop, USD run cap (SDK maxBudgetUsd), retries, escalation
@@ -90,6 +106,8 @@ Planned (not created yet):
 - **Tests:** colocate them as `foo.test.ts` next to `foo.ts`. Use `test/fixtures/` for static files and `fs.mkdtemp(os.tmpdir())` for anything written, cleaned up in `afterEach`. Assert behaviour, not implementation.
 - **Vault writes:** use `src/vault/*` and never hand-roll paths or formats. `LOG.md` is append-only, with one `appendFile` per line. Other files are written atomically with `writeFileAtomic`, and read-modify-write goes through a `KeyedMutex`. Every LOG line follows `[YYYY-MM-DD HH:mm][session] did X | touching: files`. Session state lives in session-note frontmatter, and `orc status` reads only the vault.
 - **New CLI command:** add `src/cli/commands/<name>.ts` that exports a `Command`, register it in `registry.ts`, and parse options with `parseCommandArgs`. Command options go _after_ the command name.
+- **Plan format:** the plan is markdown in the target vault, parsed by `src/vault/plan.ts`. Formats orc acts on are strict: `` - `NAME`: purpose `` under `## Env vars`, `` - `file.md`: … `` under `## Docs`, and workstream notes with `## Goal/Owns/Tasks/Definition of done` and `- [ ] T1: title (needs: ws/T2)`. Change a format in three places together: the parser, `kit/prompts/planner.md`, and the fixture `test/fixtures/planner/plan-reply.md`.
+- **Agent calls:** go through `AgentAdapter.runTurn`, pass the remaining `maxBudgetUsd`, and treat any non-`success` outcome as a failure. Validate every reply before acting on it, and give invalid replies at most `retries.maxPerTask` repair turns in the same session.
 - **Timestamps** come from the injected `now()` and are formatted with `formatTimestamp` (local `YYYY-MM-DD HH:mm`). Tests use `localTime()` so they pass in any time zone.
 - **Git:** use Conventional Commits (`feat(config): …`, `chore: …`, `docs(vault): …`). Commit after each completed step, after `npm run check` passes.
 
