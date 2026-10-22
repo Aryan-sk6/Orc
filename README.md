@@ -31,7 +31,9 @@ node dist/cli/index.js --help
 
 | Command | What it does |
 |---|---|
+| `orc init [--force]` | Install the kit in this folder: `/orc-plan`, `/orc-run`, `/orc-summarize`, the `orc-driver` subagent, an orchestrator block in AGENTS.md/CLAUDE.md, the vault and its templates. Run it before opening Claude Code |
 | `orc plan <idea.md> [--force] [--defaults]` | Questions, then the plan. `--defaults` accepts every suggested answer |
+| `orc plan --check` | Validate a hand-written plan (no model call) and rewrite `plan/task-graph.md` |
 | `orc check-setup` | Env vars (including the API key) and required docs |
 | `orc run [--workstream <name>]...` | Run sessions until done or paused. Re-run to resume; finished tasks are skipped |
 | `orc integrate [--milestone <name>]` | Merge finished workstreams, run install and checks |

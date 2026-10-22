@@ -38,3 +38,7 @@ One line per update, newest last, in the format `[time][session] did X | touchin
 [2026-10-22 19:46][m6] dogfood script (setup + timed orc commands) and README with empty numbers table; live run blocked on ANTHROPIC_API_KEY, user will run it | touching: scripts/dogfood.mjs, README.md, package.json, .gitignore, vault/
 [2026-10-22 19:52][m6] fake-adapter end-to-end run: plan/run/summarize OK; integrate merges nothing on mutual workstream deps and writes no decision (bug, open question) | touching: vault/
 [2026-10-22 19:54][m6] orc integrate: merge mutually dependent workstreams together once all finished; escalate when all finished but nothing merged; 3 tests, 331 pass; fake end-to-end now integrates | touching: src/integration/
+[2026-10-22 19:57][m7] kit templates (orchestrator section, 3 skills, orc-driver subagent) with {{vault}} and {{prompt:x}} embedding the shared prompts | touching: kit/
+[2026-10-22 19:57][m7] orc init [--force]: installs skills, subagent, AGENTS.md/CLAUDE.md block, vault + templates, config, .gitignore; idempotent | touching: src/kit/, src/cli/commands/init.ts, src/vault/layout.ts
+[2026-10-22 19:57][m7] orc plan --check: validate a hand-written plan with the run parser, rewrite task-graph.md, no model call; 351 tests pass | touching: src/cli/commands/plan.ts
+[2026-10-22 19:57][m7] M7 done: decision 0013, session note, kit formats doc; fresh-project test OK, Claude Code/Orca/VS Code untested | touching: vault/
