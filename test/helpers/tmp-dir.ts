@@ -11,7 +11,7 @@ export function useTmpDir(prefix = "orc-test-"): () => string {
   });
   afterEach(async () => {
     if (dir !== undefined) {
-      await rm(dir, { recursive: true, force: true });
+      await rm(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
     }
   });
   return () => {
