@@ -23,6 +23,7 @@ npm run build       # tsc -p tsconfig.build.json → dist/
 npm run check       # typecheck + lint + test (run before every commit)
 npm run demo:status # orc status on the fake demo vault
 npm run demo:plan   # orc plan on the todo fixture with the fake adapter (writes .demo/, gitignored)
+npm run dogfood:setup # builds and creates .dogfood/todo-app (gitignored), no spend; then node scripts/dogfood.mjs time <orc args> (LIVE)
 npm run smoke:sdk   # LIVE: 3 cheap turns through the real SDK adapter. Spends cents; needs ANTHROPIC_API_KEY. Never in tests.
 node dist/cli/index.js --help
 ```
@@ -103,6 +104,7 @@ src/
     plan.ts               plan format: parse setup/docs-needed/workstreams, validate task graph, render task-graph.md
 scripts/
   smoke-sdk.mjs           opt-in live check of ClaudeSdkAdapter (npm run smoke:sdk); not part of the test suite
+  dogfood.mjs             M6 helper: `setup` makes .dogfood/todo-app; `time <orc args>` runs orc there and logs wall time (live commands spend money)
 test/
   helpers/                tmp-dir.ts (useTmpDir, localTime), cli.ts (captureIO with env + scripted stdin), plan.ts, git.ts (isolated git env, initRepo), driver.ts (setupApp: temp repo + vault + plan; RoutedAdapter: per-workstream scripts)
   fixtures/               configs/, demo/ (fake vault for `orc status`), planner/ (todo idea, fake script, replies)

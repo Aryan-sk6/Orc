@@ -13,7 +13,7 @@ Build one milestone per session, then commit, stop and report. Full text is in [
 | M3 | Claude Agent SDK adapter (implements `AgentAdapter`), git worktree/checkpoint manager | ✅ done 2026-10-22. [[0009-claude-sdk-adapter-mapping]], [[0010-worktrees-branches-checkpoint-tags]] | [[2026-10-22-m3-sdk-adapter-git]] |
 | M4 | Driver loop: checks gate, USD run cap (`maxBudgetUsd`), retry cap, escalation | ✅ done 2026-10-22. [[0011-driver-loop-design]] | [[2026-10-22-m4-driver-loop]] |
 | M5 | Integration driver, `orc summarize` (shared summary prompt file), `orc rewind` | ✅ done 2026-10-22. [[0012-integration-rewind-summarize]] | [[2026-10-22-m5-integration-rewind-summarize]] |
-| M6 | Dogfood on a todo app (2 workstreams) and a README with real time and **cost** numbers | ⏭ next | | |
+| M6 | Dogfood on a todo app (2 workstreams) and a README with real time and **cost** numbers | 🟡 prep done 2026-10-22 (`scripts/dogfood.mjs`, README with empty numbers table); live run waits for an API key | [[2026-10-22-m6-dogfood-prep]] |
 | M7 | **The kit**: drop-in AGENTS.md/CLAUDE.md orchestrator section, `/orc-plan`, `/orc-run` and `/orc-summarize` skills (planner and summary as prompts), driver subagents in `.claude/agents/` on a small model, vault templates, and an install command (`orc init` or `npx degit`). Test in an empty project, then in Orca and the VS Code extension. **Scoped as written** | added 2026-10-21 | |
 
 ## M6 starting points
