@@ -42,3 +42,4 @@ One line per update, newest last, in the format `[time][session] did X | touchin
 [2026-10-22 19:57][m7] orc init [--force]: installs skills, subagent, AGENTS.md/CLAUDE.md block, vault + templates, config, .gitignore; idempotent | touching: src/kit/, src/cli/commands/init.ts, src/vault/layout.ts
 [2026-10-22 19:57][m7] orc plan --check: validate a hand-written plan with the run parser, rewrite task-graph.md, no model call; 351 tests pass | touching: src/cli/commands/plan.ts
 [2026-10-22 19:57][m7] M7 done: decision 0013, session note, kit formats doc; fresh-project test OK, Claude Code/Orca/VS Code untested | touching: vault/
+[2026-10-22 19:58][m6] user will not do the live dogfood run: M6 stays prep-only, README numbers stay empty; push policy question opened | touching: vault/
