@@ -11,6 +11,7 @@ The config sits in the target app's root, or is passed with `--config <path>`. E
 | `adapter` | `"claude-agent-sdk"` \| `"fake"` | `"claude-agent-sdk"` | Which AgentAdapter drives sessions |
 | `fakeScript` | string | `"orc.fake.json"` | Scripted replies for `adapter: "fake"`, relative to the config file. JSON `{ "turns": [{ "text" or "textFile", "costUsd"?, "outcome"?, "expect"?, … }] }`. See [[0008-plan-as-strict-markdown]] |
 | `planner.model` | string | `"claude-opus-5-5"` | Model for `orc plan` |
+| `coder.model` | string | `"claude-sonnet-5-5"` | Model for the coding sessions (one per workstream) |
 | `driver.model` | string | `"claude-haiku-5-5"` | Model for driver decisions |
 | `maxBudgetUsd` | number > 0 | `20` | Run-wide spend cap in USD, based on the Agent SDK's estimated `total_cost_usd` (not billing data). Each SDK call gets the remaining amount as its `maxBudgetUsd`. Hitting it escalates to `decisions.md` and pauses sessions |
 | `retries.maxPerTask` | int ≥ 0 | `2` | Fix attempts after failed checks before escalating |

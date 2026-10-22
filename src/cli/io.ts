@@ -8,4 +8,6 @@ export interface CliIO {
   readonly stderr: (text: string) => void;
   /** Prints `prompt`, then reads one line from stdin. Resolves null at end of input. */
   readonly readLine: (prompt: string) => Promise<string | null>;
+  /** Aborted on the first Ctrl-C / SIGTERM so long-running commands can stop cleanly. */
+  readonly signal?: AbortSignal | undefined;
 }

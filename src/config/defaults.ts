@@ -14,6 +14,7 @@ export const DEFAULT_CONFIG: OrcConfig = {
   adapter: "claude-agent-sdk",
   fakeScript: "orc.fake.json",
   planner: { model: "claude-opus-5-5" },
+  coder: { model: "claude-sonnet-5-5" },
   driver: { model: "claude-haiku-5-5" },
   maxBudgetUsd: 20,
   retries: { maxPerTask: 2 },

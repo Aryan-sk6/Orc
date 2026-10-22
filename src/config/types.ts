@@ -27,6 +27,9 @@ export interface OrcConfig {
   /** Scripted outputs for the "fake" adapter, relative to the config file's directory. */
   readonly fakeScript: string;
   readonly planner: ModelConfig;
+  /** The coding sessions: one per workstream, doing the actual edits. */
+  readonly coder: ModelConfig;
+  /** The driver: short, cheap decisions between coding turns (fix prompt or escalate). */
   readonly driver: ModelConfig;
   /**
    * Run-wide spend cap in USD, based on the Agent SDK's client-side cost estimate (`total_cost_usd`).
@@ -57,6 +60,7 @@ export interface OrcConfigInput {
   readonly adapter?: AdapterKind | undefined;
   readonly fakeScript?: string | undefined;
   readonly planner?: ModelConfigInput | undefined;
+  readonly coder?: ModelConfigInput | undefined;
   readonly driver?: ModelConfigInput | undefined;
   readonly maxBudgetUsd?: number | undefined;
   readonly retries?: RetryConfigInput | undefined;

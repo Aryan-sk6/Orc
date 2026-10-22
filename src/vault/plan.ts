@@ -2,7 +2,7 @@ import type { Dirent } from "node:fs";
 import { readdir } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
 import { errorCode } from "../core/errors.js";
-import { readFileIfExists } from "../core/fs.js";
+import { KeyedMutex, readFileIfExists, writeFileAtomic } from "../core/fs.js";
 import { isValidSessionName, VAULT_LAYOUT, type VaultPaths } from "./layout.js";
 
 /*
@@ -459,6 +459,61 @@ async function listFiles(dir: string): Promise<string[]> {
     }
   }
   return files.sort();
+}
+
+// ---------------------------------------------------------------------------
+// Task progress
+
+const planLocks = new KeyedMutex();
+
+/** Absolute path of `plan/workstreams/<name>.md`. */
+export function workstreamNotePath(paths: VaultPaths, workstream: string): string {
+  return join(paths.root, ...PLAN_FILES.workstreamsDir.split("/"), `${workstream}.md`);
+}
+
+/**
+ * Ticks `- [ ] T1: …` to `- [x] T1: …` in the workstream note. The checkbox is the only record of
+ * finished tasks, so a restarted run resumes from the first unticked one. Only the `## Tasks`
+ * section is touched. Returns false when the task is missing or already ticked.
+ */
+export async function markTaskDone(
+  paths: VaultPaths,
+  workstream: string,
+  taskId: string,
+): Promise<boolean> {
+  const file = workstreamNotePath(paths, workstream);
+  return planLocks.run(file, async () => {
+    const text = await readFileIfExists(file);
+    if (text === null) {
+      return false;
+    }
+    let inTasks = false;
+    let inFence = false;
+    let changed = false;
+    const lines = text.split("\n").map((line) => {
+      if (/^\s*(```|~~~)/.test(line)) {
+        inFence = !inFence;
+      }
+      const heading = inFence ? null : /^##\s+(.+?)\s*#*\s*$/.exec(line);
+      if (heading?.[1] !== undefined) {
+        inTasks = heading[1].toLowerCase() === "tasks";
+        return line;
+      }
+      if (!inTasks || inFence || changed) {
+        return line;
+      }
+      const match = /^([-*+]\s+)\[ \](\s+)(T\d+)(?=\s*[:.])/.exec(line);
+      if (match === null || match[3]?.toUpperCase() !== taskId.toUpperCase()) {
+        return line;
+      }
+      changed = true;
+      return `${match[1]}[x]${line.slice(match[1]?.length ?? 0).slice(3)}`;
+    });
+    if (changed) {
+      await writeFileAtomic(file, lines.join("\n"));
+    }
+    return changed;
+  });
 }
 
 // ---------------------------------------------------------------------------

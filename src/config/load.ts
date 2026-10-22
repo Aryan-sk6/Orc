@@ -72,6 +72,7 @@ export function resolveConfig(
     adapter: input.adapter ?? defaults.adapter,
     fakeScript: input.fakeScript ?? defaults.fakeScript,
     planner: { model: input.planner?.model ?? defaults.planner.model },
+    coder: { model: input.coder?.model ?? defaults.coder.model },
     driver: { model: input.driver?.model ?? defaults.driver.model },
     maxBudgetUsd: input.maxBudgetUsd ?? defaults.maxBudgetUsd,
     retries: { maxPerTask: input.retries?.maxPerTask ?? defaults.retries.maxPerTask },

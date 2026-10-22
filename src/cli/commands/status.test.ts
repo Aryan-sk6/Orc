@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { captureIO } from "../../../test/helpers/cli.js";
 import { useTmpDir } from "../../../test/helpers/tmp-dir.js";
 import { main } from "../main.js";
-import { formatChecksCell, formatUsd, type StatusReport } from "./status.js";
+import { formatChecksCell, formatUsd, renderStatus, type StatusReport } from "./status.js";
 
 const DEMO_CONFIG = fileURLToPath(
   new URL("../../../test/fixtures/demo/orc.config.json", import.meta.url),
@@ -100,5 +100,39 @@ describe("formatChecksCell", () => {
         { name: "lint", status: "pending" },
       ]),
     ).toBe("1/2 pass");
+  });
+});
+
+describe("renderStatus after a restart", () => {
+  const session = {
+    session: "api",
+    workstream: "api",
+    branch: "orc/api",
+    status: "paused",
+    currentTask: "T2 Add tests",
+    tasksDone: 1,
+    tasksTotal: 2,
+    checks: [],
+    costUsd: 1,
+    agentSession: "s1",
+    updated: "2026-10-22 10:00",
+  } as const;
+  const report = (costMayBeOvercounted: boolean): StatusReport => ({
+    vaultPath: "/v",
+    sessions: [{ ...session, costMayBeOvercounted }],
+    invalidNotes: [],
+    openDecisions: 0,
+    costUsd: 1,
+    maxBudgetUsd: 5,
+  });
+
+  it("warns that spend may be overcounted for resumed sessions", () => {
+    expect(renderStatus(report(true))).toContain(
+      "Spend may be overcounted after a restart (api): resumed sessions can recount their saved total",
+    );
+  });
+
+  it("says nothing otherwise", () => {
+    expect(renderStatus(report(false))).not.toContain("overcounted");
   });
 });

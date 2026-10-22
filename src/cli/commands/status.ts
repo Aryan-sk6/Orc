@@ -113,8 +113,15 @@ export function renderStatus(report: StatusReport): string {
   return (
     `${table}\n\n` +
     `Spend: ${formatUsd(report.costUsd)} of ${formatUsd(report.maxBudgetUsd)} run cap ` +
-    `(${share.toFixed(1)}%), estimated by the Agent SDK, not billing data\n${decisions}\n`
+    `(${share.toFixed(1)}%), estimated by the Agent SDK, not billing data\n${decisions}\n${overcountNote(report.sessions)}`
   );
+}
+
+function overcountNote(sessions: readonly SessionState[]): string {
+  const names = sessions.filter((s) => s.costMayBeOvercounted).map((s) => s.session);
+  return names.length === 0
+    ? ""
+    : `Spend may be overcounted after a restart (${names.join(", ")}): resumed sessions can recount their saved total\n`;
 }
 
 /** `$1.23`; amounts that would round to $0.00 show as `<$0.01` so cheap driver calls stay visible. */
