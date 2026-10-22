@@ -9,7 +9,7 @@ These are the user's standing preferences. Every session building orc reads them
 - Drive coding sessions through `AgentAdapter`. The Claude Agent SDK implementation comes first.
 - **Never guess SDK APIs.** If you're unsure, stop and ask the user to paste docs into `vault/docs/`.
 - `FakeAgentAdapter` replays scripted output. All tests and dev runs use it.
-- LLM calls happen only in the planner and drivers. Everything else is deterministic.
+- LLM calls happen only in the planner and drivers, plus one more: the summary. The summary is a read-only call that runs only when a person invokes `orc summarize` (automated paths use `--facts-only`), with its own fixed cap (`summaryBudgetUsd`) that is not drawn from the run budget. Everything else is deterministic.
 - On a retry cap or budget cap: write to `decisions.md`, pause that session, and keep the others running. For reversible decisions, take a default, log it and carry on.
 - Event-driven code only. Never poll on a timer.
 - Use Vitest. Commit after every completed step, with clear messages.
