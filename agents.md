@@ -23,6 +23,7 @@ npm run build       # tsc -p tsconfig.build.json → dist/
 npm run check       # typecheck + lint + test (run before every commit)
 npm run demo:status # orc status on the fake demo vault
 npm run demo:plan   # orc plan on the todo fixture with the fake adapter (writes .demo/, gitignored)
+npm run smoke:sdk   # LIVE: 3 cheap turns through the real SDK adapter. Spends cents; needs ANTHROPIC_API_KEY. Never in tests.
 node dist/cli/index.js --help
 ```
 
@@ -65,6 +66,10 @@ src/
     prompts.ts            loads kit/prompts/planner.md; builds the per-turn prompts
     protocol.ts           CLI-only reply formats: questions JSON, <<<orc-file path="…">>> blocks, path safety
     check-setup.ts        deterministic: API key, plan env vars (env/.env.local/.env), docs present
+  git/                    deterministic git plumbing (execFile, no shell); no SDK, no LLM
+    git.ts                git(args, {cwd, env, okExitCodes}) → GIT_FAILED with git's message
+    worktrees.ts          openRepo, ensureWorktree (branch orc/<ws>, folder <repo>-orc-worktrees/<ws>), removeWorktree
+    checkpoints.ts        commitAll, createCheckpoint (tag orc-cp/<ws>/<task>[.n]), list/find, rewindToCheckpoint (orc-backup/ tag first)
   vault/                  the TARGET app's vault (what orc reads/writes at runtime)
     layout.ts             VAULT_LAYOUT names, vaultPaths(), session-name rules
     frontmatter.ts        flat key: scalar frontmatter parse/serialize
@@ -73,13 +78,14 @@ src/
     decisions.ts          numbered escalations in decisions.md
     init.ts               ensureVault: create layout + seed files, never overwrite
     plan.ts               plan format: parse setup/docs-needed/workstreams, validate task graph, render task-graph.md
+scripts/
+  smoke-sdk.mjs           opt-in live check of ClaudeSdkAdapter (npm run smoke:sdk); not part of the test suite
 test/
-  helpers/                tmp-dir.ts (useTmpDir, localTime), cli.ts (captureIO with env + scripted stdin), plan.ts
+  helpers/                tmp-dir.ts (useTmpDir, localTime), cli.ts (captureIO with env + scripted stdin), plan.ts, git.ts (isolated git env, initRepo)
   fixtures/               configs/, demo/ (fake vault for `orc status`), planner/ (todo idea, fake script, replies)
 vault/                    project memory for developing orc (Obsidian). NOT the target vault.
 
 Planned (not created yet):
-  src/git/                M3: worktrees, branches, checkpoint tags
   src/checks/             M4: run check commands, parse results
   src/driver/             M4: driver loop, USD run cap (SDK maxBudgetUsd), retries, escalation
   src/integration/        M5: integration driver
@@ -109,6 +115,7 @@ Planned (not created yet):
 - **Plan format:** the plan is markdown in the target vault, parsed by `src/vault/plan.ts`. Formats orc acts on are strict: `` - `NAME`: purpose `` under `## Env vars`, `` - `file.md`: … `` under `## Docs`, and workstream notes with `## Goal/Owns/Tasks/Definition of done` and `- [ ] T1: title (needs: ws/T2)`. Change a format in three places together: the parser, `kit/prompts/planner.md`, and the fixture `test/fixtures/planner/plan-reply.md`.
 - **Agent calls:** go through `AgentAdapter.runTurn`, pass the remaining `maxBudgetUsd`, and treat any non-`success` outcome as a failure. Validate every reply before acting on it, and give invalid replies at most `retries.maxPerTask` repair turns in the same session.
 - **Timestamps** come from the injected `now()` and are formatted with `formatTimestamp` (local `YYYY-MM-DD HH:mm`). Tests use `localTime()` so they pass in any time zone.
+- **Git plumbing (`src/git/`):** always pass `env` explicitly. Tests use `gitTestEnv()` so the developer's global git config never leaks in. orc's own commits use `--no-verify` and never invent an identity. Never delete a branch. See decision 0010.
 - **Git:** use Conventional Commits (`feat(config): …`, `chore: …`, `docs(vault): …`). Commit after each completed step, after `npm run check` passes.
 
 ## Project memory
