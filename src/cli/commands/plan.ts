@@ -47,7 +47,7 @@ Options:
     const ideaPath = resolve(io.cwd, ideaArg);
     const idea = await readIdea(ideaPath);
     const systemPrompt = await loadPlannerPrompt();
-    const adapter = await createAdapter(loaded);
+    const adapter = await createAdapter(loaded, io.env);
     const asker = values.defaults === true ? acceptDefaults() : askInTerminal(io);
 
     try {

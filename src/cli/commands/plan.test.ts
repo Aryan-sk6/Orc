@@ -78,11 +78,11 @@ describe("orc plan", () => {
     expect(await main(["plan"], usage)).toBe(2);
   });
 
-  it("explains that the SDK adapter is not available yet", async () => {
+  it("stops before any model call when the SDK adapter has no API key", async () => {
     const dir = await project();
     await writeFile(join(dir, "orc.config.json"), "{}");
-    const io = captureIO(dir);
+    const io = captureIO(dir, undefined, { env: {} });
     expect(await main(["plan", "idea.md"], io)).toBe(1);
-    expect(io.err()).toContain("arrives in M3");
+    expect(io.err()).toContain("ANTHROPIC_API_KEY is not set");
   });
 });

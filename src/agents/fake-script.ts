@@ -19,6 +19,7 @@ const TURN_KEYS = [
   "costUsd",
   "durationMs",
   "errors",
+  "deniedActions",
   "sessionId",
   "events",
 ] as const;
@@ -78,6 +79,7 @@ async function readTurn(
     costUsd: optionalNumber(item, "costUsd", path, problems),
     durationMs: optionalNumber(item, "durationMs", path, problems),
     errors: optionalStrings(item, "errors", path, problems),
+    deniedActions: optionalStrings(item, "deniedActions", path, problems),
     sessionId: optionalString(item, "sessionId", path, problems),
     events: readEvents(item, path, problems),
   };

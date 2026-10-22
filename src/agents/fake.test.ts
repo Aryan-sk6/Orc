@@ -44,6 +44,7 @@ describe("FakeAgentAdapter", () => {
       costUsd: 0.01,
       durationMs: 0,
       errors: [],
+      deniedActions: [],
     });
     expect(two.text).toBe("second");
     expect(two.sessionId).toBe("fake-session-1");
@@ -149,22 +150,38 @@ describe("createAdapter", () => {
     if (!parsed.ok) {
       throw new Error("config should be valid");
     }
-    const adapter = await createAdapter({
-      config: parsed.value,
-      sourcePath: null,
-      rootDir: tmp(),
-      vaultPath: join(tmp(), "vault"),
-    });
+    const adapter = await createAdapter(
+      {
+        config: parsed.value,
+        sourcePath: null,
+        rootDir: tmp(),
+        vaultPath: join(tmp(), "vault"),
+      },
+      {},
+    );
     expect(adapter.name).toBe("fake");
     expect((await adapter.runTurn(request("go"))).text).toBe("hi");
   });
 
-  it("explains that the SDK adapter is not available yet", async () => {
+  it("refuses the SDK adapter without ANTHROPIC_API_KEY", async () => {
     const parsed = parseConfig({});
     if (!parsed.ok) {
       throw new Error("config should be valid");
     }
     const loaded = { config: parsed.value, sourcePath: null, rootDir: tmp(), vaultPath: tmp() };
-    expect((await rejection(createAdapter(loaded))).code).toBe("ADAPTER_UNAVAILABLE");
+    const error = await rejection(createAdapter(loaded, { ANTHROPIC_API_KEY: " " }));
+    expect(error.code).toBe("MISSING_API_KEY");
+    expect(error.message).toContain("orc check-setup");
+  });
+
+  it("builds the SDK adapter (without starting anything) when the key is set", async () => {
+    const parsed = parseConfig({});
+    if (!parsed.ok) {
+      throw new Error("config should be valid");
+    }
+    const loaded = { config: parsed.value, sourcePath: null, rootDir: tmp(), vaultPath: tmp() };
+    const adapter = await createAdapter(loaded, { ANTHROPIC_API_KEY: "sk-test" });
+    expect(adapter.name).toBe("claude-agent-sdk");
+    await adapter.close();
   });
 });
