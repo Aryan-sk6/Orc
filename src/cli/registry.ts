@@ -4,6 +4,7 @@ import { configCommand } from "./commands/config.js";
 import { integrateCommand } from "./commands/integrate.js";
 import { logCommand } from "./commands/log.js";
 import { planCommand } from "./commands/plan.js";
+import { rewindCommand } from "./commands/rewind.js";
 import { runCommand } from "./commands/run.js";
 import { statusCommand } from "./commands/status.js";
 
@@ -13,6 +14,7 @@ export const COMMANDS: readonly Command[] = [
   checkSetupCommand,
   runCommand,
   integrateCommand,
+  rewindCommand,
   statusCommand,
   logCommand,
   configCommand,

@@ -145,3 +145,19 @@ export async function assertVaultUntracked(repo: Repo, vaultDir: string): Promis
     ],
   );
 }
+
+/** Integration branches (orc-integration/*) that contain `commit`, e.g. work a rewind just discarded. */
+export async function integrationBranchesContaining(repo: Repo, commit: string): Promise<string[]> {
+  const out = await gitOutput(
+    [
+      "branch",
+      "--format=%(refname:short)",
+      "--list",
+      `${INTEGRATION_BRANCH_PREFIX}*`,
+      "--contains",
+      commit,
+    ],
+    { cwd: repo.root, env: repo.env },
+  );
+  return out.split("\n").filter((branch) => branch !== "");
+}
