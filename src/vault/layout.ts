@@ -7,6 +7,7 @@ export const VAULT_LAYOUT = {
   sessionsDir: "sessions",
   decisions: "decisions.md",
   rules: "rules.md",
+  report: "report.md",
   planDir: "plan",
   contractsDir: "contracts",
   docsDir: "docs",
@@ -18,6 +19,7 @@ export interface VaultPaths {
   readonly sessionsDir: string;
   readonly decisions: string;
   readonly rules: string;
+  readonly report: string;
   readonly planDir: string;
   readonly contractsDir: string;
   readonly docsDir: string;
@@ -30,6 +32,7 @@ export function vaultPaths(root: string): VaultPaths {
     sessionsDir: join(root, VAULT_LAYOUT.sessionsDir),
     decisions: join(root, VAULT_LAYOUT.decisions),
     rules: join(root, VAULT_LAYOUT.rules),
+    report: join(root, VAULT_LAYOUT.report),
     planDir: join(root, VAULT_LAYOUT.planDir),
     contractsDir: join(root, VAULT_LAYOUT.contractsDir),
     docsDir: join(root, VAULT_LAYOUT.docsDir),
