@@ -22,7 +22,9 @@ export type OrcErrorCode =
   | "NOT_A_GIT_REPO"
   | "GIT_FAILED"
   | "WORKTREE_CONFLICT"
-  | "CHECKPOINT_NOT_FOUND";
+  | "CHECKPOINT_NOT_FOUND"
+  | "VAULT_TRACKED"
+  | "REWIND_BLOCKED";
 
 /** Expected failure with a stable code. Only src/cli/ turns these into output and exit codes. */
 export class OrcError extends Error {

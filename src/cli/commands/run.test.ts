@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { captureIO } from "../../../test/helpers/cli.js";
 import { type App, setupApp, tasks } from "../../../test/helpers/driver.js";
 import { localTime, useTmpDir } from "../../../test/helpers/tmp-dir.js";
+import { git } from "../../git/git.js";
 import { main } from "../main.js";
 
 const tmp = useTmpDir("orc-cli-run-");
@@ -115,5 +116,17 @@ describe("orc run", () => {
     expect(await main(["run", "--help"], io)).toBe(0);
     expect(io.out()).toContain("Usage: orc run");
     expect(io.out()).toContain("retries.maxPerTask");
+  });
+});
+
+describe("orc run: tracked vault", () => {
+  it("refuses to start while the vault is tracked by git", async () => {
+    const app = await appWithConfig({ api: tasks("Add route") }, [{ text: "route" }]);
+    await git(["add", "-f", "vault"], { cwd: app.root, env: app.env });
+    const io = captureIO(app.root, localTime(), { env: app.env });
+
+    expect(await main(["run"], io)).toBe(1);
+
+    expect(io.err()).toContain("tracked by git");
   });
 });

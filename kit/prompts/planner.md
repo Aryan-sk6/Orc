@@ -42,7 +42,7 @@ Current docs the user must paste into `vault/docs/` so sessions never rely on ou
 - `## Docs`: one bullet per file, **exactly** in this form: `` - `clerk.md`: Clerk for Next.js App Router v6: middleware, auth(), <SignIn/> (https://clerk.com/docs/...) ``. File names are lowercase and end in `.md`. Write `- None` if nothing is needed.
 
 ### `plan/workstreams/<name>.md`
-One note per workstream. Names are lowercase kebab-case (`api`, `web-ui`), because they become branch names.
+One note per workstream. Names are lowercase kebab-case (`api`, `web-ui`), because they become branch names. Never call a workstream `orc` or `integration`: orc uses those names for itself.
 
 How to split the work:
 - Use 2 to 5 workstreams, split by **file ownership**, so no two workstreams ever edit the same file. Shared code goes in contracts or is owned by exactly one workstream.
