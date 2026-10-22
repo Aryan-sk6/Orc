@@ -4,7 +4,7 @@
 
 **Turn one app idea into a plan, then let parallel AI coding sessions build it, with your own checks as the gate and a hard spending cap.**
 
-[![npm](https://img.shields.io/npm/v/orc-cli?color=cb3837&logo=npm)](https://www.npmjs.com/package/orc-cli)
+[![npm](https://img.shields.io/npm/v/orc-agents?color=cb3837&logo=npm)](https://www.npmjs.com/package/orc-agents)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![node](https://img.shields.io/badge/node-%E2%89%A520-339933?logo=node.js&logoColor=white)
 ![typescript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
@@ -64,7 +64,7 @@ You write a paragraph about the app you want. orc then:
 Requires **Node 20+**, **git**, and an **`ANTHROPIC_API_KEY`**. Run it from the root of the git repo that will hold your app (at least one commit).
 
 ```bash
-npm install -g orc-cli          # installs the `orc` command
+npm install -g orc-agents          # installs the `orc` command
 
 cd my-new-app && git init && git commit --allow-empty -m "init"
 orc init                        # kit, vault and config (see below)
