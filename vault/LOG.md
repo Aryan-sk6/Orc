@@ -34,3 +34,4 @@ One line per update, newest last, in the format `[time][session] did X | touchin
 [2026-10-22 19:41][m5] summaryBudgetUsd (0.25) fixed cap for orc summarize, separate from maxBudgetUsd; spend in the summarize session note, shown by orc status; run budget skips it; summarize reserved name; narrative by hand only, automated paths use --facts-only | touching: src/summarize/, src/cli/commands/status.ts, src/driver/run.ts, src/config/
 [2026-10-22 19:41][m5] rules.md: summary is a third, read-only, capped LLM call (by hand only, own cap); third-caller question resolved | touching: vault/rules.md, vault/Context/
 [2026-10-22 19:41][m5] open questions: spend gap resolved by summaryBudgetUsd (planner part unchanged), integration fix loop deferred until M6 data | touching: vault/Context/Open Questions.md
+[2026-10-22 19:41][m5] M5 follow-ups done: summary cap, rules.md, open questions, flaky tests fixed (D-001); session note and Home updated | touching: vault/
