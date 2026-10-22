@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { useTmpDir } from "../../test/helpers/tmp-dir.js";
 import { loadConfig } from "../config/load.js";
 import { parseDecisions } from "../vault/decisions.js";
-import { installKit } from "./install.js";
+import { installKit, syncAppGuide } from "./install.js";
 
 const tmp = useTmpDir("orc-kit-");
 
@@ -107,5 +107,28 @@ describe("installKit in an existing project", () => {
     expect(await read("notes/LOG.md")).not.toBe("");
     expect(await read("AGENTS.md")).toContain("`notes/`");
     expect((await read(".gitignore")).split("\n")).toContain("notes/");
+  });
+});
+
+describe("syncAppGuide", () => {
+  it("adds the app guide next to the orchestrator block and replaces it on a re-plan", async () => {
+    await installKit(options());
+    const orchestrator = (await read("AGENTS.md")).includes("orc orchestrator");
+
+    expect((await syncAppGuide(tmp(), "# App guide\nUse pnpm.")).action).toBe("updated");
+    expect((await syncAppGuide(tmp(), "# App guide\nUse pnpm.")).action).toBe("unchanged");
+    await syncAppGuide(tmp(), "# App guide\nUse npm.");
+
+    const text = await read("AGENTS.md");
+    expect(orchestrator).toBe(true);
+    expect(text).toContain("orc orchestrator");
+    expect(text).toContain("Use npm.");
+    expect(text).not.toContain("Use pnpm.");
+    expect(text.match(/orc:app-guide:begin/g)).toHaveLength(1);
+  });
+
+  it("creates AGENTS.md when there is none", async () => {
+    expect((await syncAppGuide(tmp(), "guide")).action).toBe("created");
+    expect(await read("AGENTS.md")).toContain("guide");
   });
 });

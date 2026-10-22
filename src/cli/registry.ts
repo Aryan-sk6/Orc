@@ -8,6 +8,7 @@ import { planCommand } from "./commands/plan.js";
 import { rewindCommand } from "./commands/rewind.js";
 import { runCommand } from "./commands/run.js";
 import { statusCommand } from "./commands/status.js";
+import { stopCommand } from "./commands/stop.js";
 import { summarizeCommand } from "./commands/summarize.js";
 
 /** Every `orc` subcommand, in the order `orc --help` lists them. */
@@ -16,6 +17,7 @@ export const COMMANDS: readonly Command[] = [
   planCommand,
   checkSetupCommand,
   runCommand,
+  stopCommand,
   integrateCommand,
   rewindCommand,
   summarizeCommand,

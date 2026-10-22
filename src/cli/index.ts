@@ -26,6 +26,10 @@ try {
     stderr: (text) => process.stderr.write(text),
     readLine: stdin.readLine,
     signal: interrupt.signal,
+    pid: process.pid,
+    kill: (pid, signal) => {
+      process.kill(pid, signal);
+    },
   });
 } finally {
   stdin.close();

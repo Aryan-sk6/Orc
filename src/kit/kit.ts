@@ -32,6 +32,17 @@ type PromptName = (typeof PROMPTS)[number];
 export const SECTION_BEGIN = "<!-- orc:begin (managed by `orc init`; edit outside this block) -->";
 export const SECTION_END = "<!-- orc:end -->";
 
+/** Markers of the target app's own guide (plan/agents.md) inside AGENTS.md. */
+export const GUIDE_BEGIN =
+  "<!-- orc:app-guide:begin (copied from the vault plan by `orc plan`) -->";
+export const GUIDE_END = "<!-- orc:app-guide:end -->";
+
+export interface Markers {
+  readonly begin: string;
+  readonly end: string;
+}
+const ORCHESTRATOR_MARKERS: Markers = { begin: SECTION_BEGIN, end: SECTION_END };
+
 /**
  * Everything the kit puts in `.claude/` plus the orchestrator section text. `{{vault}}` becomes the
  * vault folder and `{{prompt:x}}` the contents of kit/prompts/x.md, so a prompt change in
@@ -69,11 +80,15 @@ export async function buildKit(options: KitOptions): Promise<{
  * Puts `section` into `text`: replaces an existing orc block in place, otherwise appends it.
  * Everything outside the markers is kept byte for byte.
  */
-export function mergeSection(text: string, section: string): string {
-  const begin = text.indexOf(SECTION_BEGIN);
-  const end = text.indexOf(SECTION_END);
+export function mergeSection(
+  text: string,
+  section: string,
+  markers: Markers = ORCHESTRATOR_MARKERS,
+): string {
+  const begin = text.indexOf(markers.begin);
+  const end = text.indexOf(markers.end);
   if (begin !== -1 && end > begin) {
-    const after = end + SECTION_END.length;
+    const after = end + markers.end.length;
     return `${text.slice(0, begin)}${section.trimEnd()}${text.slice(after).replace(/^\r?\n/, "\n")}`;
   }
   if (text.trim() === "") {

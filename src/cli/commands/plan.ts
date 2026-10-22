@@ -3,6 +3,7 @@ import { createAdapter } from "../../agents/create.js";
 import { loadConfig } from "../../config/load.js";
 import { errorCode, errorMessage, OrcError } from "../../core/errors.js";
 import { readFileIfExists, writeFileAtomic } from "../../core/fs.js";
+import { syncAppGuide } from "../../kit/install.js";
 import { type AskQuestion, runPlanner } from "../../planner/planner.js";
 import { loadPlannerPrompt } from "../../planner/prompts.js";
 import { vaultPaths } from "../../vault/layout.js";
@@ -82,6 +83,7 @@ Options:
       for (const warning of [...result.warnings, ...asker.notes()]) {
         io.stderr(`orc: warning: ${warning}\n`);
       }
+      await copyGuide(loaded.rootDir, loaded.vaultPath, io);
       const workstreams = describeWorkstreams(result.plan);
       io.stdout(
         `\nPlan written to ${loaded.vaultPath}:\n` +
@@ -98,6 +100,20 @@ Options:
     }
   },
 };
+
+/** Copies plan/agents.md into AGENTS.md at the repo root (between marker comments). */
+async function copyGuide(rootDir: string, vaultRoot: string, io: CliIO): Promise<void> {
+  const guide = await readFileIfExists(join(vaultRoot, PLAN_FILES.agents));
+  if (guide === null || guide.trim() === "") {
+    return;
+  }
+  const result = await syncAppGuide(rootDir, guide);
+  if (result.action !== "unchanged") {
+    io.stdout(
+      `${result.action === "created" ? "Created" : "Updated"} AGENTS.md with the app's guide (plan/agents.md)\n`,
+    );
+  }
+}
 
 function describeWorkstreams(plan: Plan): string[] {
   return plan.workstreams.map((ws) => {
@@ -125,6 +141,7 @@ async function checkPlan(
     );
   }
   await writeFileAtomic(join(vault.root, PLAN_FILES.taskGraph), renderTaskGraph(parsed.value));
+  await copyGuide(loaded.rootDir, vault.root, io);
   io.stdout(
     `Plan OK: ${describeWorkstreams(parsed.value).join("; ")}\n` +
       `${parsed.value.contracts.length} contract file(s); wrote ${PLAN_FILES.taskGraph}\n`,

@@ -51,7 +51,7 @@ src/
     command.ts            Command interface: name, summary, help, run(argv, io)
     registry.ts           COMMANDS list; add new commands here
     table.ts              renderTable for terminal tables
-    commands/             one file per command: init, plan, check-setup, run, integrate, rewind, summarize, status, log, config (+ *.test.ts)
+    commands/             one file per command: init, plan, stop, check-setup, run, integrate, rewind, summarize, status, log, config (+ *.test.ts)
   config/
     types.ts              OrcConfig and OrcConfigInput interfaces
     defaults.ts           DEFAULT_CONFIG and DEFAULT_CHECK_TIMEOUT_MS
@@ -78,7 +78,7 @@ src/
     checkpoints.ts        commitAll, createCheckpoint (tag orc-cp/<ws>/<task>[.n]), list/find, rewindToCheckpoint (orc-backup/ tag first)
     changes.ts            changedFiles: edits + new files since HEAD, for LOG "touching:"
     integration.ts        orc-integration/<milestone> branch + worktree (_integration/), mergeBranch (conflict → abort), assertVaultUntracked
-  kit/                    `orc init`: kit.ts builds files from kit/ (embeds prompts, merges the marked block), install.ts writes them. Decisions/0013.
+  kit/                    `orc init`: kit.ts builds files from kit/ (embeds prompts, merges the marked block), install.ts writes them, checkKit (`orc init --check`) detects drift, syncAppGuide copies plan/agents.md into AGENTS.md. Decisions/0013.
   integration/            `orc integrate`: NO model call. See vault Decisions/0012.
     integrate.ts          runIntegration: merge finished workstreams (deps first), installCommand, full checks, decisions on conflict/failure; session note "integration"
   rewind/
@@ -97,6 +97,7 @@ src/
     reply.ts              parseDriverReply: the driver's JSON (fix | escalate)
     recorder.ts           SessionRecorder: the ONLY writer of one session's note and LOG lines (main vault)
     budget.ts             RunBudget: shared USD cap
+    run-lock.ts           <vault>/.orc-run.json: pid of the running `orc run` (second run refused, `orc stop` signals it); kill is injected
     board.ts              TaskBoard: event-driven wait for cross-workstream `needs`
   vault/                  the TARGET app's vault (what orc reads/writes at runtime)
     layout.ts             VAULT_LAYOUT names, vaultPaths(), session-name rules
@@ -135,7 +136,7 @@ vault/                    project memory for developing orc (Obsidian). NOT the 
 - **Tests:** colocate them as `foo.test.ts` next to `foo.ts`. Use `test/fixtures/` for static files and `fs.mkdtemp(os.tmpdir())` for anything written, cleaned up in `afterEach`. Assert behaviour, not implementation.
 - **Vault writes:** use `src/vault/*` and never hand-roll paths or formats. `LOG.md` is append-only, with one `appendFile` per line. Other files are written atomically with `writeFileAtomic`, and read-modify-write goes through a `KeyedMutex`. Every LOG line follows `[YYYY-MM-DD HH:mm][session] did X | touching: files`. Session state lives in session-note frontmatter, and `orc status` reads only the vault.
 - **New CLI command:** add `src/cli/commands/<name>.ts` that exports a `Command`, register it in `registry.ts`, and parse options with `parseCommandArgs`. Command options go _after_ the command name.
-- **Kit (`src/kit/`):** prompts are embedded into skills at install time; never copy prompt text into `kit/skills/`. Skills and the subagent are only replaced with `--force`; AGENTS.md/CLAUDE.md only change inside the `orc:begin/end` block; vault files and config are never overwritten. A vault format change must keep `vaultTemplates()` valid.
+- **Kit (`src/kit/`):** the orchestrator block is also loaded by coding sessions (they read the worktree's CLAUDE.md/AGENTS.md), so it says coding sessions ignore it and the first-task prompt repeats that; keep both. prompts are embedded into skills at install time; never copy prompt text into `kit/skills/`. Skills and the subagent are only replaced with `--force`; AGENTS.md/CLAUDE.md only change inside the `orc:begin/end` block; vault files and config are never overwritten. A vault format change must keep `vaultTemplates()` valid.
 - **Plan format:** the plan is markdown in the target vault, parsed by `src/vault/plan.ts`. Formats orc acts on are strict: `` - `NAME`: purpose `` under `## Env vars`, `` - `file.md`: … `` under `## Docs`, and workstream notes with `## Goal/Owns/Tasks/Definition of done` and `- [ ] T1: title (needs: ws/T2)`. Change a format in three places together: the parser, `kit/prompts/planner.md`, and the fixture `test/fixtures/planner/plan-reply.md`.
 - **Agent calls:** go through `AgentAdapter.runTurn`, pass the remaining `maxBudgetUsd`, and treat any non-`success` outcome as a failure. Validate every reply before acting on it, and give invalid replies at most `retries.maxPerTask` repair turns in the same session.
 - **Timestamps** come from the injected `now()` and are formatted with `formatTimestamp` (local `YYYY-MM-DD HH:mm`). Tests use `localTime()` so they pass in any time zone.

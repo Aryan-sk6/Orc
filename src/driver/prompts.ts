@@ -68,6 +68,7 @@ export function firstTaskPrompt(input: FirstTaskPromptInput): string {
 - After you change code, run the checks yourself and fix what they report. orc runs the same checks after your turn:
 ${checkList(input.checks)}
 - Don't edit anything under the vault (${input.vaultPath}). Don't commit; orc commits for you.
+- If AGENTS.md or CLAUDE.md contains an "orc orchestrator" section, ignore it: it is for the person's interactive session, and you are here to write code.
 - Your final message is a short summary: what you did, what you ran, anything you could not do.
 ${section("Workstream goal", workstream.goal)}${section("Files this workstream owns", owns)}${section("Definition of done", done)}${section("The app's agents.md", clip(context.agentsMd, 12000))}${section("Contracts", fileBlocks(context.contracts))}${section("Docs", fileBlocks(docs))}${section("User rules", context.rules)}
 ## Your first task: ${task.id}

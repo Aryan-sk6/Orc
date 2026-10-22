@@ -1,5 +1,5 @@
 import { loadConfig } from "../../config/load.js";
-import { installKit } from "../../kit/install.js";
+import { checkKit, installKit } from "../../kit/install.js";
 import { parseCommandArgs } from "../args.js";
 import type { Command } from "../command.js";
 import { renderTable } from "../table.js";
@@ -8,6 +8,7 @@ export const initCommand: Command = {
   name: "init",
   summary: "Copy the orc kit (skills, driver subagent, vault) into this folder",
   help: `Usage: orc init [--force]
+       orc init --check
 
 Installs the kit in the current project (the folder with orc.config.json, or here):
   .claude/skills/orc-plan|orc-run|orc-summarize/SKILL.md   the /orc-plan, /orc-run
@@ -27,10 +28,32 @@ kept unless you pass --force. Run it BEFORE you start Claude Code in the folder:
 
 Options:
   --force   Overwrite skills and the subagent file with the shipped version
+  --check   Write nothing: report which installed kit files are outdated or missing
+            compared with this version of orc (for example after a prompt changed).
+            Exits 1 if any are. Fix with "orc init --force".
 `,
   run: async (argv, io) => {
-    const { values } = parseCommandArgs(argv, { force: { type: "boolean" } });
+    const { values } = parseCommandArgs(argv, {
+      force: { type: "boolean" },
+      check: { type: "boolean" },
+    });
     const loaded = await loadConfig({ cwd: io.cwd, path: values.config });
+    if (values.check === true) {
+      const status = await checkKit({ rootDir: loaded.rootDir, vaultDir: loaded.config.vaultDir });
+      io.stdout(
+        `${renderTable(
+          [{ header: "STATUS" }, { header: "PATH" }],
+          status.map((file) => [file.status, file.path]),
+        )}\n`,
+      );
+      const stale = status.some((file) => file.status !== "current");
+      io.stdout(
+        stale
+          ? 'The kit is out of date. Run "orc init --force" to refresh skills and the subagent.\n'
+          : "The kit is up to date.\n",
+      );
+      return stale ? 1 : 0;
+    }
     const report = await installKit({
       rootDir: loaded.rootDir,
       vaultDir: loaded.config.vaultDir,
