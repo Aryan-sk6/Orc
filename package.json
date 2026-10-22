@@ -23,7 +23,8 @@
     "check": "npm run typecheck && npm run lint && npm test",
     "demo:status": "npm run build && node dist/cli/index.js status -c test/fixtures/demo/orc.config.json",
     "demo:plan": "npm run build && rm -rf .demo/plan && mkdir -p .demo && cp -R test/fixtures/planner .demo/plan && cd .demo/plan && node ../../dist/cli/index.js plan idea.md",
-    "smoke:sdk": "npm run build && node scripts/smoke-sdk.mjs"
+    "smoke:sdk": "npm run build && node scripts/smoke-sdk.mjs",
+    "dogfood:setup": "npm run build && node scripts/dogfood.mjs setup"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.2",
