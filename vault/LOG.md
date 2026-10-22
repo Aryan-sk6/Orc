@@ -36,3 +36,4 @@ One line per update, newest last, in the format `[time][session] did X | touchin
 [2026-10-22 19:41][m5] open questions: spend gap resolved by summaryBudgetUsd (planner part unchanged), integration fix loop deferred until M6 data | touching: vault/Context/Open Questions.md
 [2026-10-22 19:41][m5] M5 follow-ups done: summary cap, rules.md, open questions, flaky tests fixed (D-001); session note and Home updated | touching: vault/
 [2026-10-22 19:46][m6] dogfood script (setup + timed orc commands) and README with empty numbers table; live run blocked on ANTHROPIC_API_KEY, user will run it | touching: scripts/dogfood.mjs, README.md, package.json, .gitignore, vault/
+[2026-10-22 19:52][m6] fake-adapter end-to-end run: plan/run/summarize OK; integrate merges nothing on mutual workstream deps and writes no decision (bug, open question) | touching: vault/

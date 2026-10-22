@@ -21,3 +21,6 @@ M6 from [[Roadmap]]: dogfood on a todo app with a README of real time and cost n
 ## Next steps
 - [ ] User: `export ANTHROPIC_API_KEY=...`, then `npm run smoke:sdk`, `npm run dogfood:setup`, and the `time` commands listed in the README.
 - [ ] Next session: read the transcripts, fix prompts, fill the README table from `orc status` and `.dogfood/numbers.tsv`, settle the open questions that need real data (default `maxBudgetUsd`, fix-attempt history, integration failures), then push policy ([[0004-branch-main-no-push-until-m6]]).
+
+## Fake-adapter end-to-end run (added same day)
+Ran `plan --defaults`, `check-setup`, `run`, `integrate`, `summarize --facts-only`, `status` on the planner fixture with the fake adapter (scratch copy in `.dogfood/fake`, gitignored). Plan, check-setup, run (both workstreams, cross-workstream waits, 5/5 tasks) and summarize worked. **`integrate` failed to merge anything** on the mutual task-level dependency; see [[Open Questions]]. Costs shown ($0.35 plan, $0.05 run) are scripted fake numbers, not real.
