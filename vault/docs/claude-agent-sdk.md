@@ -1,7 +1,7 @@
 ---
 tags: [docs, sdk]
 package: "@anthropic-ai/claude-agent-sdk"
-read_against: "0.3.306 (npm latest on 2026-10-21; bundles Claude Code v2.1.306)"
+read_against: "0.3.306 (npm latest on 2026-10-21; bundles Claude Code v2.1.306). Installed and re-verified: 0.3.308 (2026-10-22)"
 fetched: 2026-10-21
 sources:
   - https://code.claude.com/docs/en/agent-sdk/overview.md
@@ -150,4 +150,17 @@ Evaluation order is hooks → deny rules → ask rules → **mode** → allow ru
 ## Gaps and judgement calls
 1. ~~**No hard token cap.**~~ **Resolved:** orc does no token accounting. The run cap is `maxBudgetUsd` (USD, estimated) plus the retry cap. Per-turn cost is the delta of `total_cost_usd`. See [[0006-usd-run-cap-no-token-accounting]].
 2. ~~**Auth.**~~ **Resolved:** `ANTHROPIC_API_KEY` is required, and `check-setup` verifies it. See [[0007-shared-planner-prompt-and-api-key]].
-3. **Still open (M3).** The docs list type names (`SDKMessage`, `Options`, `SDKResultMessage`, `ModelUsage`), but whether each is **exported** from the package root has to be confirmed against the installed `.d.ts` in M3.
+3. ~~**Exports.**~~ **Resolved (M3, 2026-10-22):** checked against the installed **0.3.308** `sdk.d.ts`. `query`, `Options`, `Query`, `SDKMessage`, `SDKResultMessage`, `SDKResultSuccess`, `SDKResultError`, `SDKSystemMessage`, `SDKAssistantMessage`, `SDKPermissionDenial`, `PermissionMode`, `ModelUsage`, `TerminalReason` and `AbortError` are all exported from the package root. See [[0009-claude-sdk-adapter-mapping]].
+
+## Verified against the 0.3.308 `.d.ts` (2026-10-22)
+These options aren't on the pages above, but their doc comments are in `sdk.d.ts`:
+- `tools?: string[] | { type:'preset'; preset:'claude_code' }` sets the **base set** of built-in tools, and `[]` disables them all. *"native builds may provide search via Bash find/grep instead of the dedicated Grep/Glob tools. List Grep/Glob here or in allowedTools to get them."*
+- `permissionPrompts?: 'host' | 'none'`. With `'none'`, *"anything that would otherwise prompt is denied immediately … `canUseTool` is never called."*
+- `total_cost_usd` doc: *"a resumed or forked session continues from the total its transcript saved, when it has one (so the first result already carries the earlier turns; maxBudgetUsd counts only the spend since this query() call started or last /clear)"*.
+- `SDKModelRefusalNoFallbackMessage` (`type:"system", subtype:"model_refusal_no_fallback"`) is the structured form of a refusal with no fallback retry.
+- `SDKAssistantMessageError` also includes `'oauth_org_not_allowed' | 'account_on_hold' | 'verification_required' | 'unknown' | 'cloud_credential_error'`.
+
+From https://code.claude.com/docs/en/permissions.md (fetched 2026-10-22):
+- *"A `*` at the end, with a space before it, also matches the bare command."* So `Bash(npm test *)` matches both `npm test` and `npm test -- foo`. A rule with no `*` matches exactly.
+- *"a rule like `Bash(safe-cmd *)` won't give it permission to run the command `safe-cmd && other-cmd`."* Separators are `&&`, `||`, `;`, `|`, `|&`, `&` and newlines, and each subcommand must match on its own.
+- `dontAsk`: *"Auto-denies every call that would otherwise prompt … File reads in your working directories and other actions that need no approval still run, as do tools pre-approved via … `permissions.allow` rules."*

@@ -9,8 +9,8 @@ This is the guide for any coding agent working on **orc**, a TypeScript CLI that
 - **`node:util` `parseArgs`** handles CLI argument parsing. No CLI framework.
 - **Vitest 4** runs the tests. It's pinned below v5 because v5 drops Node 20.
 - **Biome 2** does linting and formatting in one tool. `noExplicitAny` and `noNonNullAssertion` are errors. It skips `*.md`: its Markdown formatter rewrites frontmatter, even inside fenced blocks.
-- **`@anthropic-ai/claude-agent-sdk`** comes in M3 and may only be used inside `src/agents/claude-sdk.ts`. Read `vault/docs/claude-agent-sdk.md` before touching it.
-- **Runtime dependencies: none.** Adding one needs a decision note in `vault/Decisions/`.
+- **`@anthropic-ai/claude-agent-sdk` 0.3.308** (pinned exactly) is the only runtime dependency. Only `src/agents/claude-sdk.ts` imports it (its test may `import type`), and `createAdapter` loads it lazily. Read `vault/docs/claude-agent-sdk.md` and decision 0009 before touching it.
+- **Adding any other runtime dependency** needs a decision note in `vault/Decisions/`.
 
 ## Commands
 
@@ -55,10 +55,11 @@ src/
     fs.ts                 readFileIfExists, writeFileAtomic, writeFileIfMissing, KeyedMutex
     env-file.ts           minimal .env parser for presence checks
   agents/
-    adapter.ts            AgentAdapter: runTurn(request) → {sessionId, outcome, text, costUsd per turn}, close(). No SDK imports.
+    adapter.ts            AgentAdapter: runTurn(request) → {sessionId, outcome, text, costUsd per turn, deniedActions}, close(). No SDK imports.
+    claude-sdk.ts         ClaudeSdkAdapter: THE only SDK import. Access → permission mode, cumulative cost → per-turn delta, result → outcome
     fake.ts               FakeAgentAdapter: replays FakeTurn[] in order, records requests, `expect` guards prompts
     fake-script.ts        loads a JSON fake script (config `fakeScript`); `textFile` for long replies
-    create.ts             createAdapter(loadedConfig): "fake" now, "claude-agent-sdk" in M3
+    create.ts             createAdapter(loadedConfig, env): fake or (lazily imported) SDK adapter; MISSING_API_KEY check
   planner/                the only LLM caller so far (besides M4's driver)
     planner.ts            runPlanner: questions turn → ask user → plan turn (resumed) → validate → repair → write
     prompts.ts            loads kit/prompts/planner.md; builds the per-turn prompts
@@ -78,7 +79,6 @@ test/
 vault/                    project memory for developing orc (Obsidian). NOT the target vault.
 
 Planned (not created yet):
-  src/agents/             M3: claude-sdk.ts (maps AgentAccess to permission modes, cost delta from total_cost_usd)
   src/git/                M3: worktrees, branches, checkpoint tags
   src/checks/             M4: run check commands, parse results
   src/driver/             M4: driver loop, USD run cap (SDK maxBudgetUsd), retries, escalation

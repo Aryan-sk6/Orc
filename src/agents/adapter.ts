@@ -37,6 +37,16 @@ export interface AgentTurnRequest {
   /** Continue this session with full prior context instead of starting a new one. */
   readonly resumeSessionId?: string | undefined;
   readonly access: AgentAccess;
+  /**
+   * Shell commands an "edit" turn may run without approval (e.g. the configured check commands).
+   * Each also allows the same command with extra arguments. Ignored for "read-only" turns.
+   */
+  readonly allowedCommands?: readonly string[] | undefined;
+  /**
+   * The main checkout when `cwd` is a git worktree of it. Project-level agent config
+   * (settings, subagents, skills) is read from here so every worktree runs with the same setup.
+   */
+  readonly projectRoot?: string | undefined;
   /** USD cap for this turn (an estimate). Reaching it ends the turn with outcome "max_budget". */
   readonly maxBudgetUsd?: number | undefined;
   readonly signal?: AbortSignal | undefined;
@@ -57,6 +67,8 @@ export interface AgentTurnResult {
   readonly durationMs: number;
   /** Error messages from the backend when `outcome` is not "success". */
   readonly errors: readonly string[];
+  /** Tool calls the backend blocked during the turn, as "Tool: detail". Feedback for the next prompt. */
+  readonly deniedActions: readonly string[];
 }
 
 export interface AgentAdapter {

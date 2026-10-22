@@ -5,18 +5,30 @@ import type { AgentAdapter } from "./adapter.js";
 import { FakeAgentAdapter } from "./fake.js";
 import { loadFakeScript } from "./fake-script.js";
 
-/** Builds the adapter named by `config.adapter`. */
-export async function createAdapter(loaded: LoadedConfig): Promise<AgentAdapter> {
+/** orc authenticates with an API key only (Decisions/0007). */
+export const API_KEY_VAR = "ANTHROPIC_API_KEY";
+
+/** Builds the adapter named by `config.adapter`. `env` is passed through to the agent process. */
+export async function createAdapter(
+  loaded: LoadedConfig,
+  env: Readonly<Record<string, string | undefined>>,
+): Promise<AgentAdapter> {
   switch (loaded.config.adapter) {
     case "fake":
       return new FakeAgentAdapter(
         await loadFakeScript(resolve(loaded.rootDir, loaded.config.fakeScript)),
       );
-    case "claude-agent-sdk":
-      throw new OrcError(
-        "ADAPTER_UNAVAILABLE",
-        'the Claude Agent SDK adapter arrives in M3. For now set "adapter": "fake" in orc.config.json ' +
-          'and point "fakeScript" at a scripted-output file.',
-      );
+    case "claude-agent-sdk": {
+      if ((env[API_KEY_VAR] ?? "").trim() === "") {
+        throw new OrcError(
+          "MISSING_API_KEY",
+          `${API_KEY_VAR} is not set. Export it in your shell (orc doesn't read .env files), ` +
+            'then run "orc check-setup".',
+        );
+      }
+      // Loaded on demand so commands that never call an agent don't pay for importing the SDK.
+      const { ClaudeSdkAdapter } = await import("./claude-sdk.js");
+      return new ClaudeSdkAdapter({ env });
+    }
   }
 }

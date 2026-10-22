@@ -7,7 +7,7 @@ export type OrcErrorCode =
   | "INVALID_SESSION_NAME"
   | "INVALID_LOG_ENTRY"
   | "VAULT_NOT_FOUND"
-  | "ADAPTER_UNAVAILABLE"
+  | "MISSING_API_KEY"
   | "FAKE_SCRIPT_INVALID"
   | "FAKE_SCRIPT_EXHAUSTED"
   | "FAKE_SCRIPT_MISMATCH"
@@ -16,7 +16,11 @@ export type OrcErrorCode =
   | "IDEA_NOT_FOUND"
   | "PLAN_EXISTS"
   | "PLAN_INVALID"
-  | "PROMPT_NOT_FOUND";
+  | "PROMPT_NOT_FOUND"
+  | "NOT_A_GIT_REPO"
+  | "GIT_FAILED"
+  | "WORKTREE_CONFLICT"
+  | "CHECKPOINT_NOT_FOUND";
 
 /** Expected failure with a stable code. Only src/cli/ turns these into output and exit codes. */
 export class OrcError extends Error {

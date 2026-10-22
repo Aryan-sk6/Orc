@@ -16,6 +16,7 @@ export interface FakeTurn {
   readonly costUsd?: number | undefined;
   readonly durationMs?: number | undefined;
   readonly errors?: readonly string[] | undefined;
+  readonly deniedActions?: readonly string[] | undefined;
   /** Overrides the session id; by default a resume keeps its id and a new turn gets a fresh one. */
   readonly sessionId?: string | undefined;
   /** Progress events emitted before the result, after the "session" event. */
@@ -74,7 +75,7 @@ export class FakeAgentAdapter implements AgentAdapter {
     const sessionId = turn.sessionId ?? request.resumeSessionId ?? this.newSessionId();
     const outcome = turn.outcome ?? "success";
     if (request.signal?.aborted === true) {
-      return result(sessionId, "error", "", 0, 0, ["aborted"]);
+      return result(sessionId, "error", "", 0, 0, ["aborted"], []);
     }
 
     request.onEvent?.({ type: "session", sessionId });
@@ -88,6 +89,7 @@ export class FakeAgentAdapter implements AgentAdapter {
       turn.costUsd ?? 0,
       turn.durationMs ?? 0,
       turn.errors ?? [],
+      turn.deniedActions ?? [],
     );
   }
 
@@ -108,6 +110,7 @@ function result(
   costUsd: number,
   durationMs: number,
   errors: readonly string[],
+  deniedActions: readonly string[],
 ): AgentTurnResult {
-  return { sessionId, outcome, text, costUsd, durationMs, errors };
+  return { sessionId, outcome, text, costUsd, durationMs, errors, deniedActions };
 }

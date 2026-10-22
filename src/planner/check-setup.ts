@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { API_KEY_VAR } from "../agents/create.js";
 import { parseEnvFile } from "../core/env-file.js";
 import { readFileIfExists } from "../core/fs.js";
 import type { VaultPaths } from "../vault/layout.js";
@@ -8,9 +9,6 @@ import { PLAN_FILES, parseDocsNeeded, parseSetup } from "../vault/plan.js";
  * `orc check-setup`: deterministic presence checks, no network calls.
  * Values are never read into the report, only whether they are set.
  */
-
-/** orc itself needs this; it is checked even before a plan exists. */
-export const API_KEY_VAR = "ANTHROPIC_API_KEY";
 
 /** Checked in this order after the environment; the first non-empty value wins. */
 export const ENV_FILES: readonly string[] = [".env.local", ".env"];
