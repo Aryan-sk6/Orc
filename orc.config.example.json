@@ -8,6 +8,7 @@
   "maxBudgetUsd": 20,
   "retries": { "maxPerTask": 2 },
   "installCommand": "",
+  "summaryBudgetUsd": 0.25,
   "checks": [
     { "name": "typecheck", "command": "npm run typecheck", "timeoutMs": 600000 },
     { "name": "lint", "command": "npm run lint", "timeoutMs": 600000 },

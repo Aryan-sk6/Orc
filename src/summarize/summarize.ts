@@ -5,7 +5,12 @@ import { writeFileAtomic } from "../core/fs.js";
 import { serializeFrontmatter } from "../vault/frontmatter.js";
 import type { VaultPaths } from "../vault/layout.js";
 import { appendLog, formatTimestamp, readLogTail } from "../vault/log.js";
-import { roundUsd } from "../vault/session-note.js";
+import {
+  readSessionNotes,
+  roundUsd,
+  SUMMARY_SESSION,
+  writeSessionState,
+} from "../vault/session-note.js";
 import { gatherFacts, renderFacts } from "./facts.js";
 import { summaryPrompt, summaryRepairPrompt, validateSummary } from "./prompts.js";
 
@@ -40,7 +45,7 @@ export interface SummarizeResult {
  * `orc summarize`: reads every session note, the decisions and the log, and writes
  * <vault>/report.md. The facts (sessions, decisions, spend) are rendered deterministically; one
  * read-only call on the small driver model adds the narrative on top. If the model cannot be
- * used (no adapter, no budget left, bad replies), the report is still written, without it.
+ * used (no adapter, bad replies), the report is still written, without it.
  */
 export async function runSummary(options: SummarizeOptions): Promise<SummarizeResult> {
   const { config, vault } = options;
@@ -49,20 +54,19 @@ export async function runSummary(options: SummarizeOptions): Promise<SummarizeRe
   let narrative: string | null = null;
   let reason: string | null = null;
   let costUsd = 0;
-  const remaining = Math.max(0, config.maxBudgetUsd - facts.spentUsd);
+  // A fixed cap per call, apart from the run cap: summary spend never draws from maxBudgetUsd.
+  const cap = config.summaryBudgetUsd;
 
   if (options.adapter === null) {
     reason = "facts only (--facts-only)";
-  } else if (remaining <= 0) {
-    reason = `the run cap of $${config.maxBudgetUsd} is already spent`;
   } else {
     const logTail = await readLogTail(vault, SUMMARY_LOG_LINES);
     let prompt = summaryPrompt(facts, logTail);
     let resume: string | undefined;
     for (let repairs = 0; ; repairs += 1) {
-      const left = remaining - costUsd;
+      const left = cap - costUsd;
       if (left <= 0) {
-        reason = `the run cap of $${config.maxBudgetUsd} was reached while repairing the reply`;
+        reason = `the summary cap of $${cap} was reached while repairing the reply`;
         break;
       }
       const turn = await callModel(options, options.adapter, {
@@ -89,10 +93,14 @@ export async function runSummary(options: SummarizeOptions): Promise<SummarizeRe
     }
   }
 
+  if (options.adapter !== null) {
+    await recordSummarySpend(options, costUsd);
+  }
+  // Read again so the spend table includes this call.
   const body =
     `# Run report\n\n` +
     (narrative === null ? `_No narrative: ${reason}._\n\n` : `${narrative}\n\n`) +
-    renderFacts(facts);
+    renderFacts(await gatherFacts(vault, config, facts.generated));
   await writeFileAtomic(
     vault.report,
     serializeFrontmatter(
@@ -117,6 +125,28 @@ export async function runSummary(options: SummarizeOptions): Promise<SummarizeRe
     reason,
     costUsd: roundUsd(costUsd),
   };
+}
+
+/** Adds this call's cost to the `summarize` session note, so `orc status` shows it. */
+async function recordSummarySpend(options: SummarizeOptions, costUsd: number): Promise<void> {
+  const previous = (await readSessionNotes(options.vault)).find(
+    (note) => note.name === SUMMARY_SESSION,
+  );
+  const before = previous?.result.ok === true ? previous.result.state.costUsd : 0;
+  await writeSessionState(options.vault, {
+    session: SUMMARY_SESSION,
+    workstream: SUMMARY_SESSION,
+    branch: "none",
+    status: "done",
+    currentTask: null,
+    tasksDone: 0,
+    tasksTotal: 0,
+    checks: [],
+    costUsd: roundUsd(before + costUsd),
+    agentSession: null,
+    costMayBeOvercounted: false,
+    updated: formatTimestamp(options.now()),
+  });
 }
 
 /** A backend that cannot run at all becomes an "error" turn; anything else is a bug and propagates. */

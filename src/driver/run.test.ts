@@ -22,7 +22,7 @@ import { listCheckpoints } from "../git/checkpoints.js";
 import { gitOutput } from "../git/git.js";
 import { readDecisions } from "../vault/decisions.js";
 import { parseLogLine } from "../vault/log.js";
-import { readSessionNotes, type SessionState } from "../vault/session-note.js";
+import { readSessionNotes, type SessionState, writeSessionState } from "../vault/session-note.js";
 import { type RunDriverOptions, type RunResult, runDriver } from "./run.js";
 
 const tmp = useTmpDir("orc-driver-");
@@ -588,5 +588,31 @@ describe("runDriver: requests never leak past the contract", () => {
       expect(request.allowedCommands).toEqual([MARKER_CHECK.command]);
       expect(request.signal).toBeUndefined();
     }
+  });
+});
+
+describe("runDriver: summary spend", () => {
+  it("does not count the summarize session toward the run cap", async () => {
+    const app = await setupApp(tmp(), { api: tasks("Add route") });
+    await writeSessionState(app.vault, {
+      session: "summarize",
+      workstream: "summarize",
+      branch: "none",
+      status: "done",
+      currentTask: null,
+      tasksDone: 0,
+      tasksTotal: 0,
+      checks: [],
+      costUsd: 500,
+      agentSession: null,
+      costMayBeOvercounted: false,
+      updated: "2026-10-22 10:00",
+    });
+    const adapter = new RoutedAdapter({ api: [ok("did T1")] }, writeMarker);
+
+    const result = await run(app, adapter, { config: testConfig({ maxBudgetUsd: 5 }) });
+
+    expect(result.sessions[0]?.end).toBe("done");
+    expect(result.spentUsd).toBe(0.1);
   });
 });

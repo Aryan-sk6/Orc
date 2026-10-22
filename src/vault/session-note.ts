@@ -21,6 +21,9 @@ export const SESSION_STATUSES = [
 ] as const;
 export type SessionStatus = (typeof SESSION_STATUSES)[number];
 
+/** Session name of `orc summarize`. Its spend is kept apart from the run cap (Decisions/0012). */
+export const SUMMARY_SESSION = "summarize";
+
 export const CHECK_STATUSES = ["pass", "fail", "pending", "skipped"] as const;
 export type CheckStatus = (typeof CHECK_STATUSES)[number];
 

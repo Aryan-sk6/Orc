@@ -216,7 +216,7 @@ export function parseDocsNeeded(text: string): ParseResult<readonly DocRequireme
 
 /** Parses one workstream note. `needs` refs are normalized to "<ws>/<id>" but not resolved. */
 /** Session names orc uses for itself: run-level LOG lines and the integration session note. */
-export const RESERVED_WORKSTREAM_NAMES: readonly string[] = ["orc", "integration"];
+export const RESERVED_WORKSTREAM_NAMES: readonly string[] = ["orc", "integration", "summarize"];
 
 export function parseWorkstream(name: string, text: string): ParseResult<Workstream> {
   const file = `${PLAN_FILES.workstreamsDir}/${name}.md`;

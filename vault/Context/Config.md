@@ -16,6 +16,7 @@ The config sits in the target app's root, or is passed with `--config <path>`. E
 | `maxBudgetUsd` | number > 0 | `20` | Run-wide spend cap in USD, based on the Agent SDK's estimated `total_cost_usd` (not billing data). Each SDK call gets the remaining amount as its `maxBudgetUsd`. Hitting it escalates to `decisions.md` and pauses sessions |
 | `retries.maxPerTask` | int ≥ 0 | `2` | Fix attempts after failed checks before escalating |
 | `installCommand` | string | `""` | `orc integrate` runs this in the fresh integration worktree before the checks (e.g. `"npm ci"`), because a new worktree has no `node_modules`. Empty: the checks run on the bare checkout. A string; empty means none |
+| `summaryBudgetUsd` | number > 0 | `0.25` | Fixed cap for one `orc summarize` narrative call, repair turns included. **Separate from `maxBudgetUsd`**: it is not drawn from the run budget and does not count toward it. Spend is kept in the `summarize` session note and shown by `orc status` |
 | `checks[]` | `{name, command, timeoutMs?}` | typecheck, lint, test, build via npm scripts, 600000 ms each | Run in order after every session turn. Replaces the defaults if given |
 
 **Removed:** the `budgets.perTaskTokens` and `budgets.perRunTokens` token caps. A `budgets` key is now rejected.

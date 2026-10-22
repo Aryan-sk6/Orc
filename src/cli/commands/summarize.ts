@@ -17,8 +17,14 @@ Reads every session note, decisions.md and the end of LOG.md, and writes
 waiting for you, next steps) followed by tables of sessions, decisions and spend.
 
 The tables are built by orc. The narrative is one call on the driver model with
-the shared prompt kit/prompts/summary.md, limited by what is left of the run cap
-(maxBudgetUsd). If the model cannot be used the report is written without it.
+the shared prompt kit/prompts/summary.md. That call has its own fixed cap
+(summaryBudgetUsd, default $0.25, repair turns included) that is separate from the
+run cap (maxBudgetUsd): it is never drawn from it. The spend is added to the
+"summarize" session, so "orc status" shows it. If the model cannot be used the
+report is written without the narrative.
+
+Run it by hand. Anything automated (scripts, hooks, the M7 skills) should pass
+--facts-only, which makes no model call and records no spend.
 
 Options:
   --facts-only   Write the tables only: no model call, no API key needed

@@ -9,6 +9,7 @@ import { parseFrontmatter } from "../vault/frontmatter.js";
 import { appendLog } from "../vault/log.js";
 import {
   appendToSessionSection,
+  readSessionNotes,
   type SessionState,
   writeSessionState,
 } from "../vault/session-note.js";
@@ -123,11 +124,11 @@ describe("runSummary", () => {
     );
   });
 
-  it("asks the small driver model, read-only, with the rest of the run cap", async () => {
+  it("asks the small driver model, read-only, with the fixed summary cap", async () => {
     const app = await appWithSessions();
     const adapter = new FakeAgentAdapter({ turns: [turn(REPLY)] });
 
-    await summarize(app, adapter, testConfig({ maxBudgetUsd: 5 }));
+    await summarize(app, adapter, testConfig({ maxBudgetUsd: 5, summaryBudgetUsd: 0.5 }));
 
     const request = adapter.requests[0];
     expect(request).toMatchObject({
@@ -135,7 +136,7 @@ describe("runSummary", () => {
       access: "read-only",
       systemPrompt: "You write the report.",
       cwd: app.repo.root,
-      maxBudgetUsd: 3,
+      maxBudgetUsd: 0.5,
     });
     expect(request?.prompt).toContain("T2: lint failed once");
     expect(request?.prompt).toContain("T1 done: A");
@@ -182,15 +183,51 @@ describe("runSummary", () => {
     expect(await readFile(app.vault.report, "utf8")).toContain("_No narrative: facts only");
   });
 
-  it("makes no model call when the run cap is already spent", async () => {
+  it("is not drawn from the run budget: it still runs when the run cap is spent", async () => {
     const app = await appWithSessions();
-    const adapter = new FakeAgentAdapter({ turns: [] });
+    const adapter = new FakeAgentAdapter({ turns: [turn(REPLY)] });
 
     const result = await summarize(app, adapter, testConfig({ maxBudgetUsd: 2 }));
 
+    expect(result.narrative).toBe(true);
+    expect(adapter.requests[0]?.maxBudgetUsd).toBe(0.25);
+  });
+
+  it("stops repairing when the fixed summary cap is used up", async () => {
+    const app = await appWithSessions();
+    const adapter = new FakeAgentAdapter({
+      turns: [turn("no", { costUsd: 0.2 }), turn("no", { costUsd: 0.1 }), turn(REPLY)],
+    });
+
+    const result = await summarize(app, adapter);
+
     expect(result.narrative).toBe(false);
-    expect(result.reason).toContain("already spent");
-    expect(adapter.requests).toEqual([]);
+    expect(result.reason).toContain("summary cap of $0.25");
+    expect(adapter.requests.map((r) => Math.round((r.maxBudgetUsd ?? 0) * 1e4) / 1e4)).toEqual([
+      0.25, 0.05,
+    ]);
+  });
+
+  it("records its spend in the summarize session note, accumulating, outside the run total", async () => {
+    const app = await appWithSessions();
+
+    await summarize(app, new FakeAgentAdapter({ turns: [turn(REPLY, { costUsd: 0.04 })] }));
+    await summarize(app, new FakeAgentAdapter({ turns: [turn(REPLY, { costUsd: 0.03 })] }));
+
+    const note = (await readSessionNotes(app.vault)).find((n) => n.name === "summarize");
+    expect(note?.result.ok && note.result.state.costUsd).toBe(0.07);
+    const report = await readFile(app.vault.report, "utf8");
+    expect(report).toContain("$2.00 of $20.00 run cap");
+    expect(report).toContain("Summary calls: $0.07 so far, capped at $0.25 per call");
+    expect(report).toContain("| summarize | done |");
+  });
+
+  it("makes no note for a facts-only report", async () => {
+    const app = await appWithSessions();
+
+    await summarize(app, null);
+
+    expect((await readSessionNotes(app.vault)).some((n) => n.name === "summarize")).toBe(false);
   });
 
   it("reports a failed model call instead of failing the command", async () => {

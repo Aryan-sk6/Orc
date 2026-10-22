@@ -20,4 +20,5 @@ export const DEFAULT_CONFIG: OrcConfig = {
   retries: { maxPerTask: 2 },
   checks: DEFAULT_CHECKS,
   installCommand: "",
+  summaryBudgetUsd: 0.25,
 };

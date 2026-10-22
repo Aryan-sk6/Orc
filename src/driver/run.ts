@@ -6,7 +6,12 @@ import { defaultWorktreesDir, ensureWorktree, type Repo } from "../git/worktrees
 import type { VaultPaths } from "../vault/layout.js";
 import { appendLog, formatTimestamp } from "../vault/log.js";
 import type { Plan } from "../vault/plan.js";
-import { readSessionNotes, roundUsd, type SessionState } from "../vault/session-note.js";
+import {
+  readSessionNotes,
+  roundUsd,
+  type SessionState,
+  SUMMARY_SESSION,
+} from "../vault/session-note.js";
 import { TaskBoard } from "./board.js";
 import { RunBudget } from "./budget.js";
 import { loadSessionContext } from "./context.js";
@@ -65,9 +70,12 @@ export async function runDriver(options: RunDriverOptions): Promise<RunResult> {
     }
   }
   // Earlier runs count against the same cap, for every session, selected or not.
+  // The summary has its own cap and never counts toward the run cap.
   const budget = new RunBudget(
     config.maxBudgetUsd,
-    [...saved.values()].reduce((sum, state) => sum + state.costUsd, 0),
+    [...saved.values()]
+      .filter((state) => state.session !== SUMMARY_SESSION)
+      .reduce((sum, state) => sum + state.costUsd, 0),
   );
 
   const board = new TaskBoard(

@@ -43,6 +43,11 @@ export interface OrcConfig {
    * dependencies exist there (e.g. "npm ci"). Empty: run the checks on the bare checkout.
    */
   readonly installCommand: string;
+  /**
+   * Fixed USD cap for one `orc summarize` narrative call (all its repair turns). Separate from
+   * `maxBudgetUsd`: summary spend never draws from, or counts toward, the run cap.
+   */
+  readonly summaryBudgetUsd: number;
 }
 
 export interface ModelConfigInput {
@@ -71,4 +76,5 @@ export interface OrcConfigInput {
   readonly retries?: RetryConfigInput | undefined;
   readonly checks?: readonly CheckCommandInput[] | undefined;
   readonly installCommand?: string | undefined;
+  readonly summaryBudgetUsd?: number | undefined;
 }

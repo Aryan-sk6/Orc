@@ -24,8 +24,9 @@ M5 of [[Spec]]: an integration driver, `orc rewind` and `orc summarize`. The ope
 
 **Summarize (`orc summarize [--facts-only]`)**
 10. `vault/report.md` = a narrative on top, deterministic tables below. The tables (sessions, decisions, spend) are built from the vault by code. The narrative is **one read-only call on `driver.model`** with `kit/prompts/summary.md` (shared with M7's `/orc-summarize`), given the facts, each session note and the last 60 LOG lines. The reply must contain exactly four `## ` sections in order; invalid replies get up to `retries.maxPerTask` repair turns in the same conversation. If the model is unusable (no key, `--facts-only`, cap spent, bad replies, backend error) the report is still written with a line saying why.
-11. **This adds a third LLM caller** (`src/summarize/`), next to the planner and the driver. `agents.md` now lists it. The rule in [[rules]] ("LLM calls happen only in the planner and drivers") is the user's wording and is left as written; the roadmap itself asks for a "shared summary prompt file", which needs a model. **Flagged for the user to confirm.**
-12. The call is capped by what is left of `maxBudgetUsd` (sum of session notes). Its own cost goes into the report's frontmatter and the LOG line, not into a session note, so later runs do not count it (same gap as the planner, see [[Open Questions]]).
+11. **This is a third LLM caller** (`src/summarize/`), next to the planner and the driver. The user confirmed it on 2026-10-22: read-only, capped, and `rules.md` was updated to say so.
+12. **Its own fixed cap, outside the run budget.** `summaryBudgetUsd` (default 0.25) limits one `orc summarize` call, repair turns included. It never draws from `maxBudgetUsd`. The spend is added to a `summarize` session note, so `orc status` shows it on its own line and in the table. `orc run` and the report's run total skip that note, and `summarize` is a reserved workstream name. The cap is per call, not cumulative.
+13. **Only by hand.** Nothing in orc calls the narrative. Automated paths (scripts, hooks, M7's skills) pass `--facts-only`, which makes no model call and writes no note.
 
 ## Alternatives considered
 - **A model to resolve small merge conflicts.** Cheap to build, but it hides plan mistakes and a wrong resolution passes unnoticed until the checks. Escalate first, measure in M6.

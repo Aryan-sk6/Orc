@@ -25,6 +25,7 @@ Build one milestone per session, then commit, stop and report. Full text is in [
 - **README:** commands, the two vaults, config, the numbers from the dogfood. Push policy: [[0004-branch-main-no-push-until-m6]].
 
 ## Notes for M7
+- Anything automated that writes a report (a `/orc-run` finish step, hooks) must call `orc summarize --facts-only`. The narrative is for a person typing `orc summarize`. Its cost is capped separately by `summaryBudgetUsd` ([[0012-integration-rewind-summarize]]).
 - ~~Planner code or prompt?~~ Resolved by [[0007-shared-planner-prompt-and-api-key]]: one prompt file, used by both `orc plan` and `/orc-plan`. The file is `kit/prompts/planner.md`. `/orc-plan` should reuse it, but tell the agent to write the files itself instead of using the CLI's `<<<orc-file>>>` protocol, then run a validator (for example a future `orc plan --check`) ([[0008-plan-as-strict-markdown]]).
 - The vault module (`src/vault/`) writes the same files the kit's templates create, so build the templates from the same constants (`VAULT_LAYOUT`) to avoid drift.
 - `orc init` needs a kit directory shipped inside the npm package (`files` in package.json).
