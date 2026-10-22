@@ -127,6 +127,14 @@ class IntegrationRunner {
         ? null
         : `${blocked.length} of ${order.length} workstreams not merged: ${blocked.map((m) => m.workstream).join(", ")}`;
     if (integrated.length === 0) {
+      const allFinished = o.plan.workstreams.every((ws) => ws.tasks.every((task) => task.done));
+      if (allFinished && !blocked.some((m) => m.status.kind === "conflict")) {
+        // Everything is finished yet nothing merged (a conflict would already be escalated):
+        // that is stuck for a reason a person has to look at, not just work still to do.
+        await this.escalate(
+          `orc integrate merged nothing although every workstream is finished: ${notMerged}.`,
+        );
+      }
       return this.finish(worktree, merges, null, null, "paused", notMerged ?? "nothing to merge");
     }
 
@@ -212,7 +220,16 @@ class IntegrationRunner {
     if (done < workstream.tasks.length) {
       return { kind: "skipped", reason: `unfinished (${done}/${workstream.tasks.length} tasks)` };
     }
-    const missing = workstream.dependsOn.filter((name) => !integrated(name));
+    // Workstreams that depend on each other (task-level needs in both directions) can't be ordered:
+    // merge them together once all of them are finished.
+    const mates = dependencyCycleMates(o.plan.workstreams, workstream.name);
+    const missing = workstream.dependsOn.filter((name) => {
+      if (integrated(name)) {
+        return false;
+      }
+      const mate = mates.get(name);
+      return mate === undefined || mate.tasks.some((task) => !task.done);
+    });
     if (missing.length > 0) {
       return { kind: "skipped", reason: `depends on ${missing.join(", ")}, which is not merged` };
     }
@@ -342,6 +359,35 @@ export function mergeOrder(workstreams: readonly Workstream[]): Workstream[] {
   };
   workstreams.forEach(visit);
   return ordered;
+}
+
+/** Workstreams in a dependency cycle with `name` (reachable from it and reaching it), by name. */
+function dependencyCycleMates(
+  workstreams: readonly Workstream[],
+  name: string,
+): Map<string, Workstream> {
+  const byName = new Map(workstreams.map((ws) => [ws.name, ws]));
+  const reachable = (from: string): Set<string> => {
+    const found = new Set<string>();
+    const stack = [from];
+    for (let next = stack.pop(); next !== undefined; next = stack.pop()) {
+      for (const dependency of byName.get(next)?.dependsOn ?? []) {
+        if (!found.has(dependency)) {
+          found.add(dependency);
+          stack.push(dependency);
+        }
+      }
+    }
+    return found;
+  };
+  const mates = new Map<string, Workstream>();
+  for (const other of reachable(name)) {
+    const workstream = byName.get(other);
+    if (workstream !== undefined && reachable(other).has(name)) {
+      mates.set(other, workstream);
+    }
+  }
+  return mates;
 }
 
 export function describeMerge(status: MergeStatus): string {
