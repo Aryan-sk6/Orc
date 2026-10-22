@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { captureIO } from "../../../test/helpers/cli.js";
@@ -128,5 +128,25 @@ describe("orc run: tracked vault", () => {
     expect(await main(["run"], io)).toBe(1);
 
     expect(io.err()).toContain("tracked by git");
+  });
+
+  it("holds a lock file while running, removes it afterwards, and refuses a second live run", async () => {
+    const app = await appWithConfig({ api: tasks("Add route") }, [{ text: "route" }]);
+    const lockFile = join(app.root, "vault", ".orc-run.json");
+    const alive = (): void => undefined;
+
+    await writeFile(lockFile, JSON.stringify({ pid: 4242, started: "2026-10-22 10:00" }));
+    const refused = captureIO(app.root, localTime(), { env: app.env });
+    expect(await main(["run"], { ...refused, pid: 111, kill: alive })).toBe(1);
+    expect(refused.err()).toContain("already running (pid 4242");
+    expect(await readFile(lockFile, "utf8")).toContain("4242");
+
+    // The recorded process is gone: the stale lock is replaced, then removed at the end.
+    const gone = (): void => {
+      throw Object.assign(new Error("no such process"), { code: "ESRCH" });
+    };
+    const io = captureIO(app.root, localTime(), { env: app.env });
+    expect(await main(["run"], { ...io, pid: 111, kill: gone })).toBe(0);
+    await expect(readFile(lockFile, "utf8")).rejects.toMatchObject({ code: "ENOENT" });
   });
 });

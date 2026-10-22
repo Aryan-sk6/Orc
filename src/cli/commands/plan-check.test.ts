@@ -37,4 +37,15 @@ describe("orc plan --check", () => {
     expect(await main(["plan", "--check", "idea.md"], io)).not.toBe(0);
     expect(io.err()).toContain("--check takes no idea file");
   });
+
+  it("copies plan/agents.md into AGENTS.md at the repo root", async () => {
+    await writeFixturePlan(join(tmp(), "vault"));
+    const io = captureIO(tmp());
+
+    await main(["plan", "--check"], io);
+
+    expect(io.out()).toContain("Created AGENTS.md with the app's guide");
+    const guide = await readFile(join(tmp(), "vault/plan/agents.md"), "utf8");
+    expect(await readFile(join(tmp(), "AGENTS.md"), "utf8")).toContain(guide.trim());
+  });
 });

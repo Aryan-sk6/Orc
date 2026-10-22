@@ -3,11 +3,13 @@ import { loadConfig } from "../../config/load.js";
 import { OrcError } from "../../core/errors.js";
 import { loadDriverPrompt } from "../../driver/prompts.js";
 import { runDriver } from "../../driver/run.js";
+import { acquireRunLock, releaseRunLock } from "../../driver/run-lock.js";
 import { assertVaultUntracked } from "../../git/integration.js";
 import { openRepo } from "../../git/worktrees.js";
 import { checkSetup } from "../../planner/check-setup.js";
 import { readDecisions } from "../../vault/decisions.js";
 import { vaultPaths } from "../../vault/layout.js";
+import { formatTimestamp } from "../../vault/log.js";
 import { parsePlan, readPlanFiles } from "../../vault/plan.js";
 import { parseCommandArgs } from "../args.js";
 import type { Command } from "../command.js";
@@ -31,7 +33,7 @@ answer from you, or the run cap (maxBudgetUsd) is reached. The reason is written
 to <vault>/decisions.md. Fix the cause and run "orc run" again: finished tasks are
 skipped and the agent conversation is resumed.
 
-Ctrl-C stops the sessions cleanly. Spend is the Agent SDK's estimate, not billing data.
+Ctrl-C (or "orc stop" from another terminal) stops the sessions cleanly. Spend is the Agent SDK's estimate, not billing data.
 
 Requires: a plan (orc plan), a passing "orc check-setup", a git repository with at
 least one commit, and git user.name/user.email.
@@ -77,7 +79,14 @@ Options:
     await assertVaultUntracked(repo, loaded.vaultPath);
     const driverSystemPrompt = await loadDriverPrompt();
     const adapter = await createAdapter(loaded, io.env);
+    // Lets "orc stop" find this process; a second "orc run" in the same project is refused.
+    const kill = io.kill;
+    const pid = io.pid;
+    const locked = kill !== undefined && pid !== undefined;
     try {
+      if (locked) {
+        await acquireRunLock(vault, { pid, started: formatTimestamp(io.now()) }, kill);
+      }
       const result = await runDriver({
         adapter,
         config: loaded.config,
@@ -122,6 +131,9 @@ Options:
       }
       return result.sessions.every((s) => s.end === "done") ? 0 : 1;
     } finally {
+      if (locked) {
+        await releaseRunLock(vault, pid);
+      }
       await adapter.close();
     }
   },

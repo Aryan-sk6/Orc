@@ -39,6 +39,11 @@ describe("buildKit", () => {
     expect(kit.files.at(-1)?.content).toContain("tools: Read, Grep, Glob");
   });
 
+  it("tells coding sessions started by orc run to ignore the orchestrator block", async () => {
+    const kit = await buildKit({ vaultDir: "vault" });
+    expect(kit.section).toContain("Coding sessions started by `orc run` ignore this whole section");
+  });
+
   it("tells automated paths to use --facts-only", async () => {
     const kit = await buildKit({ vaultDir: "vault" });
     const summarize = kit.files.find((file) => file.path.includes("orc-summarize"));

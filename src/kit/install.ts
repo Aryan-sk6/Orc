@@ -7,7 +7,7 @@ import { formatDecision } from "../vault/decisions.js";
 import { ensureVault } from "../vault/init.js";
 import { vaultPaths } from "../vault/layout.js";
 import { renderSessionNote } from "../vault/session-note.js";
-import { buildKit, type KitFile, mergeSection } from "./kit.js";
+import { buildKit, GUIDE_BEGIN, GUIDE_END, type KitFile, mergeSection } from "./kit.js";
 
 export type InstallAction = "created" | "updated" | "unchanged" | "kept";
 
@@ -165,4 +165,54 @@ async function ensureIgnored(rootDir: string, entry: string): Promise<InstalledF
 async function write(path: string, content: string): Promise<void> {
   await mkdir(dirname(path), { recursive: true });
   await writeFileAtomic(path, content);
+}
+
+/** What `orc init --check` says about one installed file. */
+export type KitStatus = "current" | "outdated" | "missing";
+
+export interface KitFileStatus {
+  readonly path: string;
+  readonly status: KitStatus;
+}
+
+/**
+ * `orc init --check`: compares the installed skills, subagent and instruction blocks with what
+ * `installKit` would write now (for example after `kit/prompts/` changed). Writes nothing.
+ */
+export async function checkKit(options: Omit<InstallOptions, "force">): Promise<KitFileStatus[]> {
+  const kit = await buildKit({ vaultDir: options.vaultDir, kitDir: options.kitDir });
+  const result: KitFileStatus[] = [];
+  for (const file of kit.files) {
+    const current = await readFileIfExists(join(options.rootDir, file.path));
+    result.push({
+      path: file.path,
+      status: current === null ? "missing" : current === file.content ? "current" : "outdated",
+    });
+  }
+  for (const name of INSTRUCTION_FILES) {
+    const current = await readFileIfExists(join(options.rootDir, name));
+    const merged = mergeSection(current ?? "", kit.section);
+    result.push({
+      path: name,
+      status: current === null ? "missing" : current === merged ? "current" : "outdated",
+    });
+  }
+  return result;
+}
+
+/**
+ * Puts the target app's own guide (the vault's plan/agents.md) into AGENTS.md as a marked block,
+ * next to the orchestrator block, so people and other tools see it at the repo root. Replaces the
+ * block on a re-plan; never touches text outside it. Returns the file's path and what happened.
+ */
+export async function syncAppGuide(rootDir: string, guide: string): Promise<InstalledFile> {
+  const target = join(rootDir, "AGENTS.md");
+  const current = await readFileIfExists(target);
+  const block = `${GUIDE_BEGIN}\n${guide.trim()}\n${GUIDE_END}\n`;
+  const next = mergeSection(current ?? "", block, { begin: GUIDE_BEGIN, end: GUIDE_END });
+  if (current === next) {
+    return { path: "AGENTS.md", action: "unchanged" };
+  }
+  await write(target, next);
+  return { path: "AGENTS.md", action: current === null ? "created" : "updated" };
 }

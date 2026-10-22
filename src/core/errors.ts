@@ -24,7 +24,8 @@ export type OrcErrorCode =
   | "WORKTREE_CONFLICT"
   | "CHECKPOINT_NOT_FOUND"
   | "VAULT_TRACKED"
-  | "REWIND_BLOCKED";
+  | "REWIND_BLOCKED"
+  | "RUN_ACTIVE";
 
 /** Expected failure with a stable code. Only src/cli/ turns these into output and exit codes. */
 export class OrcError extends Error {

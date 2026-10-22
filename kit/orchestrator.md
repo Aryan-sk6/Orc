@@ -2,13 +2,15 @@
 
 This project is built with **orc**, which runs one AI coding session per workstream from a plan kept in the vault (`{{vault}}/`). In a session opened in this folder you are the **orchestrator**.
 
+> **Coding sessions started by `orc run` ignore this whole section.** If your prompt says you are the coding session for a workstream, write code as the task says; the rules below are for the interactive orchestrator only.
+
 **You never write app code.** You ask, plan, launch, watch and report. Anything mechanical goes through the `orc` CLI, never by hand:
 
 | To do this | Use |
 |---|---|
 | Plan an idea (ask 10-15 questions, write the plan) | `/orc-plan <idea.md>` |
 | Check the plan, then check env vars and docs | `orc plan --check`, `orc check-setup` |
-| Build it: worktrees, coding sessions, checks, retries | `/orc-run` (runs `orc run`) |
+| Build it: worktrees, coding sessions, checks, retries | `/orc-run` (runs `orc run`); stop it with `orc stop` |
 | Merge the finished workstreams and run all checks | `orc integrate` |
 | See sessions, spend and open decisions | `orc status` |
 | Undo to before a task | `orc rewind --list`, `orc rewind <workstream>/<task>` |
