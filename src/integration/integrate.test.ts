@@ -164,6 +164,45 @@ describe("runIntegration", () => {
     expect(result.end).toBe("done");
   });
 
+  it("merges workstreams that need each other once all of them are finished", async () => {
+    const app = await setupApp(tmp(), {
+      alpha: "- [ ] T1: A1 (needs: zeta/T1)\n- [ ] T2: A2",
+      zeta: "- [ ] T1: Z1\n- [ ] T2: Z2 (needs: alpha/T2)",
+    });
+    await finish(app, "alpha", { "a.txt": "a\n" }, ["T1", "T2"]);
+    await finish(app, "zeta", { "z.txt": "z\n" }, ["T1", "T2"]);
+
+    const result = await integrate(app, check("test -f a.txt && test -f z.txt"));
+
+    expect(kinds(result).sort()).toEqual(["alpha:merged", "zeta:merged"]);
+    expect(result.end).toBe("done");
+  });
+
+  it("does not merge a workstream whose mutually dependent mate is unfinished", async () => {
+    const app = await setupApp(tmp(), {
+      alpha: "- [ ] T1: A1 (needs: zeta/T1)\n- [ ] T2: A2",
+      zeta: "- [ ] T1: Z1\n- [ ] T2: Z2 (needs: alpha/T2)",
+    });
+    await finish(app, "alpha", { "a.txt": "a\n" }, ["T1", "T2"]);
+    await finish(app, "zeta", { "z.txt": "z\n" }, ["T1"]);
+
+    const result = await integrate(app, check("true"));
+
+    expect(kinds(result).sort()).toEqual(["alpha:skipped", "zeta:skipped"]);
+    expect(result.end).toBe("paused");
+    expect(await readDecisions(app.vault)).toHaveLength(0);
+  });
+
+  it("escalates when every workstream is finished but nothing could be merged", async () => {
+    const app = await setupApp(tmp(), { alpha: tasks("A") });
+    await markTaskDone(app.vault, "alpha", "T1");
+
+    const result = await integrate(app, check("true"));
+
+    expect(result.end).toBe("paused");
+    expect(await readDecisions(app.vault)).toHaveLength(1);
+  });
+
   it("escalates failing checks with the failing check named", async () => {
     const app = await setupApp(tmp(), { api: tasks("A") });
     await finish(app, "api", { "a.txt": "a\n" });
