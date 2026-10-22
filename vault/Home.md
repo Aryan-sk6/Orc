@@ -6,8 +6,8 @@ tags: [index]
 Shared memory for every working session on ORC, whether a person or Claude runs it. Read this page first, and update it when anything important changes.
 
 ## Current state
-- **Status:** M4 is done (2026-10-22): the driver loop (`src/driver/`, `src/checks/`, [[0011-driver-loop-design]]) and `orc run`. It has only run against the fake adapter, so the real-SDK path and the prompts are untried. M3 gave the SDK adapter ([[0009-claude-sdk-adapter-mapping]]) and git worktrees/checkpoints ([[0010-worktrees-branches-checkpoint-tags]]). **M5 is next:** integration driver, `orc summarize`, `orc rewind`.
-- **Try it:** `orc run` needs a plan, a passing `orc check-setup` and a git repo with a commit; with `adapter: "fake"` it spends nothing. `npm run demo:status` shows `orc status` on fake data. `npm run demo:plan` runs `orc plan` on a todo idea with the fake adapter (answer the questions or press Enter), then `cd .demo/plan && node ../../dist/cli/index.js check-setup`. `npm run smoke:sdk` is a **live** check of the SDK adapter: it spends a few cents and needs the key. It hasn't been run yet.
+- **Status:** M5 is done (2026-10-22): `orc integrate`, `orc rewind` and `orc summarize` ([[0012-integration-rewind-summarize]]). Everything so far has run only against the fake adapter, so the real-SDK path and all prompts are untried. M4 gave the driver loop and `orc run` ([[0011-driver-loop-design]]); M3 the SDK adapter ([[0009-claude-sdk-adapter-mapping]]) and git worktrees/checkpoints ([[0010-worktrees-branches-checkpoint-tags]]). **M6 is next:** dogfood on a todo app and the README with real numbers. One item needs the user: [[0012-integration-rewind-summarize]] adds a third LLM caller (summarize).
+- **Try it:** `orc integrate` merges finished workstreams (set `installCommand` first), `orc rewind --list` / `orc rewind api/T3`, `orc summarize --facts-only` needs no key. `orc run` needs a plan, a passing `orc check-setup` and a git repo with a commit; with `adapter: "fake"` it spends nothing. `npm run demo:status` shows `orc status` on fake data. `npm run demo:plan` runs `orc plan` on a todo idea with the fake adapter (answer the questions or press Enter), then `cd .demo/plan && node ../../dist/cli/index.js check-setup`. `npm run smoke:sdk` is a **live** check of the SDK adapter: it spends a few cents and needs the key. It hasn't been run yet.
 - **Branch:** `main`, local commits only. No push until after M6 ([[0004-branch-main-no-push-until-m6]]).
 - **SDK docs:** [[claude-agent-sdk]] (read against 0.3.306; installed and re-verified against 0.3.308).
 
@@ -23,6 +23,7 @@ Shared memory for every working session on ORC, whether a person or Claude runs 
 - `Sessions/`, `Decisions/`, `Templates/`
 
 ## Recent sessions
+- [[2026-10-22-m5-integration-rewind-summarize]]
 - [[2026-10-22-m4-driver-loop]]
 - [[2026-10-22-m3-sdk-adapter-git]]
 - [[2026-10-22-m2-planner]]
@@ -42,3 +43,4 @@ Shared memory for every working session on ORC, whether a person or Claude runs 
 - [[0009-claude-sdk-adapter-mapping]]
 - [[0010-worktrees-branches-checkpoint-tags]]
 - [[0011-driver-loop-design]]
+- [[0012-integration-rewind-summarize]]

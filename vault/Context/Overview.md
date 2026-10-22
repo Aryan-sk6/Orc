@@ -11,7 +11,7 @@ tags: [context]
 3. `orc run` gives each workstream its own git worktree and branch, its own coding session, and its own **driver** agent.
 4. The driver loop runs deterministic checks first (typecheck, lint, test, build). It then chooses the next task, a fix prompt, or escalation. When the checks pass and the next task is clear, it makes no model call.
 5. The integration driver merges finished workstreams into `integration` for each milestone.
-6. `orc summarize`, `orc status`, `orc stop` and `orc rewind <checkpoint>` round out the commands.
+6. `orc integrate` merges finished workstreams and runs the full checks, `orc summarize` writes `report.md`, and `orc rewind <checkpoint>` undoes tasks. `orc status` shows everything. (`orc stop` is not built; Ctrl-C stops a run.)
 
 ## Goals
 - Build an app from one plan, with workstreams running in parallel.

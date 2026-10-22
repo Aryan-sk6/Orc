@@ -36,6 +36,7 @@ orc.config.example.json   every config key with its default
 kit/                      ships in the npm package; M7 adds the rest of the kit here
   prompts/planner.md      THE planner prompt, shared by `orc plan` and M7's /orc-plan. Says WHAT to produce.
   prompts/driver.md       THE driver prompt: fix or escalate after a failed check, JSON reply.
+  prompts/summary.md      THE summary prompt, shared by `orc summarize` and M7's /orc-summarize: four fixed sections.
 src/
   cli/
     index.ts              bin entry (shebang); calls main() and sets the exit code. No logic here.
@@ -46,7 +47,7 @@ src/
     command.ts            Command interface: name, summary, help, run(argv, io)
     registry.ts           COMMANDS list; add new commands here
     table.ts              renderTable for terminal tables
-    commands/             one file per command: plan, check-setup, run, status, log, config (+ *.test.ts)
+    commands/             one file per command: plan, check-setup, run, integrate, rewind, summarize, status, log, config (+ *.test.ts)
   config/
     types.ts              OrcConfig and OrcConfigInput interfaces
     defaults.ts           DEFAULT_CONFIG and DEFAULT_CHECK_TIMEOUT_MS
@@ -72,6 +73,15 @@ src/
     worktrees.ts          openRepo, ensureWorktree (branch orc/<ws>, folder <repo>-orc-worktrees/<ws>), removeWorktree
     checkpoints.ts        commitAll, createCheckpoint (tag orc-cp/<ws>/<task>[.n]), list/find, rewindToCheckpoint (orc-backup/ tag first)
     changes.ts            changedFiles: edits + new files since HEAD, for LOG "touching:"
+    integration.ts        orc-integration/<milestone> branch + worktree (_integration/), mergeBranch (conflict → abort), assertVaultUntracked
+  integration/            `orc integrate`: NO model call. See vault Decisions/0012.
+    integrate.ts          runIntegration: merge finished workstreams (deps first), installCommand, full checks, decisions on conflict/failure; session note "integration"
+  rewind/
+    rewind.ts             rewindWorkstream: worktree reset + backup tag, untick plan, reset session note (drops agentSession)
+  summarize/              LLM caller #3 (read-only, driver model): `orc summarize`
+    facts.ts              gatherFacts/renderFacts: sessions, decisions, spend tables from the vault (deterministic)
+    prompts.ts            loads kit/prompts/summary.md; builds the prompt; validateSummary (four ## sections, in order)
+    summarize.ts          runSummary: model narrative (repair turns, budget-capped) + tables → vault/report.md
   checks/
     run-checks.ts         runCheck/runChecks: shell command in a worktree, timeout + abort kill the process group, output tail
   driver/                 `orc run`: the loop. LLM caller #2, always via AgentAdapter. See vault Decisions/0011.
@@ -97,17 +107,13 @@ test/
   helpers/                tmp-dir.ts (useTmpDir, localTime), cli.ts (captureIO with env + scripted stdin), plan.ts, git.ts (isolated git env, initRepo), driver.ts (setupApp: temp repo + vault + plan; RoutedAdapter: per-workstream scripts)
   fixtures/               configs/, demo/ (fake vault for `orc status`), planner/ (todo idea, fake script, replies)
 vault/                    project memory for developing orc (Obsidian). NOT the target vault.
-
-Planned (not created yet):
-  src/integration/        M5: integration driver
-  src/summarize/          M5: orc summarize
 ```
 
 ## Hard rules
 
 - **No `any`.** At every boundary (JSON, CLI args, SDK output), take `unknown` and narrow it with a type guard or validator. Avoid `as` casts. The only exceptions are `as const` and narrowing an already-validated value, and those need a one-line comment explaining why.
 - **Explicit interfaces** for every exported shape. Exported functions get explicit return types. The one exception is a thin wrapper whose type comes from a generic library call, such as `parseCommandArgs`. Config and plan data are `readonly`.
-- **LLM calls only in `src/planner/` and `src/driver/`**, and always through `AgentAdapter`. Every other module is deterministic and must not import the SDK.
+- **LLM calls only in `src/planner/`, `src/driver/` and `src/summarize/`** (the last is a read-only narrative, see Decisions/0012), and always through `AgentAdapter`. Every other module is deterministic and must not import the SDK.
 - **Never guess an SDK API.** If `vault/docs/` doesn't cover a call, stop and ask the user to paste the docs.
 - **Event-driven only.** No `setInterval` or sleep-and-check loops. React to adapter events, child-process exits and promises.
 - **Tests never hit the network or spend tokens.** Agent behaviour in tests comes from `FakeAgentAdapter` with scripted outputs.
@@ -127,6 +133,7 @@ Planned (not created yet):
 - **Agent calls:** go through `AgentAdapter.runTurn`, pass the remaining `maxBudgetUsd`, and treat any non-`success` outcome as a failure. Validate every reply before acting on it, and give invalid replies at most `retries.maxPerTask` repair turns in the same session.
 - **Timestamps** come from the injected `now()` and are formatted with `formatTimestamp` (local `YYYY-MM-DD HH:mm`). Tests use `localTime()` so they pass in any time zone.
 - **Driver (`src/driver/`):** orc writes the vault, agents don't: each session's note and LOG lines go through its `SessionRecorder`, and finished tasks are ticked in the workstream note with `markTaskDone`. When checks pass, the next task is sent with no model call. Every agent call gets `maxBudgetUsd = budget.remaining()`. Tests script parallel sessions with `RoutedAdapter` (one fake per worktree folder), never one shared fake.
+- **Integration, rewind, summarize:** `orc integrate` never calls a model and never resolves a conflict itself: it escalates through `appendDecision`. `orc rewind` resets the plan ticks and the session note together with the worktree, and drops `agentSession`. `orc` and `integration` are reserved workstream names. `orc run` and `orc integrate` refuse a git-tracked vault. The summary narrative must pass `validateSummary` (four `##` sections in order); the tables are always built by code.
 - **Git plumbing (`src/git/`):** always pass `env` explicitly. Tests use `gitTestEnv()` so the developer's global git config never leaks in. orc's own commits use `--no-verify` and never invent an identity. Never delete a branch. See decision 0010.
 - **Git:** use Conventional Commits (`feat(config): …`, `chore: …`, `docs(vault): …`). Commit after each completed step, after `npm run check` passes.
 
