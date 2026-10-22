@@ -1,7 +1,28 @@
 {
-  "name": "orc",
-  "version": "0.0.0",
-  "description": "Orchestrate AI coding sessions to build an app from one detailed plan.",
+  "name": "orc-cli",
+  "version": "0.1.0",
+  "description": "Turn one app idea into a plan, then run parallel AI coding sessions gated by your own checks and a hard USD cap.",
+  "author": "Aryan-sk6",
+  "homepage": "https://github.com/Aryan-sk6/Orc#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Aryan-sk6/Orc.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Aryan-sk6/Orc/issues"
+  },
+  "keywords": [
+    "ai",
+    "coding-agent",
+    "orchestration",
+    "claude",
+    "claude-code",
+    "agent-sdk",
+    "cli",
+    "git-worktree",
+    "llm",
+    "developer-tools"
+  ],
   "license": "MIT",
   "type": "module",
   "bin": {
@@ -9,7 +30,8 @@
   },
   "files": [
     "dist",
-    "kit"
+    "kit",
+    "orc.config.example.json"
   ],
   "engines": {
     "node": ">=20"
@@ -24,7 +46,8 @@
     "demo:status": "npm run build && node dist/cli/index.js status -c test/fixtures/demo/orc.config.json",
     "demo:plan": "npm run build && rm -rf .demo/plan && mkdir -p .demo && cp -R test/fixtures/planner .demo/plan && cd .demo/plan && node ../../dist/cli/index.js plan idea.md",
     "smoke:sdk": "npm run build && node scripts/smoke-sdk.mjs",
-    "dogfood:setup": "npm run build && node scripts/dogfood.mjs setup"
+    "dogfood:setup": "npm run build && node scripts/dogfood.mjs setup",
+    "prepublishOnly": "npm run check && npm run build"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.2",

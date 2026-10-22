@@ -44,3 +44,4 @@ One line per update, newest last, in the format `[time][session] did X | touchin
 [2026-10-22 19:57][m7] M7 done: decision 0013, session note, kit formats doc; fresh-project test OK, Claude Code/Orca/VS Code untested | touching: vault/
 [2026-10-22 19:58][m6] user will not do the live dogfood run: M6 stays prep-only, README numbers stay empty; push policy question opened | touching: vault/
 [2026-10-22 20:04][m7] leftovers: orc stop (run lock file), orc init --check, app guide copied into AGENTS.md, orchestrator block ignored by coding sessions; skipped: integration LLM fix loop (user decision) and plan --force clearing contracts (protects hand-written ones) | touching: src/driver/run-lock.ts, src/cli/commands/stop.ts, src/kit/
+[2026-10-22 20:06][release] package renamed orc-cli 0.1.0 (orc taken on npm), metadata, LICENSE, public README rewritten with honest status section | touching: package.json, README.md, LICENSE
