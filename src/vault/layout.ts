@@ -11,6 +11,7 @@ export const VAULT_LAYOUT = {
   planDir: "plan",
   contractsDir: "contracts",
   docsDir: "docs",
+  templatesDir: "templates",
 } as const;
 
 export interface VaultPaths {
@@ -23,6 +24,7 @@ export interface VaultPaths {
   readonly planDir: string;
   readonly contractsDir: string;
   readonly docsDir: string;
+  readonly templatesDir: string;
 }
 
 export function vaultPaths(root: string): VaultPaths {
@@ -36,6 +38,7 @@ export function vaultPaths(root: string): VaultPaths {
     planDir: join(root, VAULT_LAYOUT.planDir),
     contractsDir: join(root, VAULT_LAYOUT.contractsDir),
     docsDir: join(root, VAULT_LAYOUT.docsDir),
+    templatesDir: join(root, VAULT_LAYOUT.templatesDir),
   };
 }
 
