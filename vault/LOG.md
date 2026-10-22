@@ -47,3 +47,4 @@ One line per update, newest last, in the format `[time][session] did X | touchin
 [2026-10-22 20:06][release] package renamed orc-cli 0.1.0 (orc taken on npm), metadata, LICENSE, public README rewritten with honest status section | touching: package.json, README.md, LICENSE
 [2026-10-22 20:08][release] scrubbed personal email and home path from history (author/committer now the GitHub noreply address); repo-local git email set to noreply | touching: git history, vault/Sessions/
 [2026-10-22 20:17][release] npm rejected orc-cli (too similar to opn-cli); package renamed orc-agents | touching: package.json, README.md
+[2026-10-22 20:19][release] pushed main to github.com/Aryan-sk6/Orc; npm publish of orc-agents 0.1.0 pending registry processing | touching: vault/Home.md
