@@ -23,6 +23,7 @@ const TOP_LEVEL_KEYS = [
   "adapter",
   "fakeScript",
   "planner",
+  "coder",
   "driver",
   "maxBudgetUsd",
   "retries",
@@ -41,6 +42,7 @@ export function validateConfigInput(raw: unknown): ValidationResult<OrcConfigInp
   rejectUnknownKeys(raw, TOP_LEVEL_KEYS, "", issues);
 
   const planner = readSection(raw, "planner", MODEL_KEYS, "", issues);
+  const coder = readSection(raw, "coder", MODEL_KEYS, "", issues);
   const driver = readSection(raw, "driver", MODEL_KEYS, "", issues);
   const retries = readSection(raw, "retries", RETRY_KEYS, "", issues);
 
@@ -49,6 +51,7 @@ export function validateConfigInput(raw: unknown): ValidationResult<OrcConfigInp
     adapter: readAdapter(raw, issues),
     fakeScript: readString(raw, "fakeScript", "", issues),
     planner: planner && readModel(planner, "planner", issues),
+    coder: coder && readModel(coder, "coder", issues),
     driver: driver && readModel(driver, "driver", issues),
     maxBudgetUsd: readPositiveNumber(raw, "maxBudgetUsd", "", issues),
     retries: retries && {

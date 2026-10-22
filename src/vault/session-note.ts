@@ -45,6 +45,13 @@ export interface SessionState {
    * per-call `total_cost_usd`. An estimate, not billing data.
    */
   readonly costUsd: number;
+  /** The coding agent's session id, so a restarted run can resume the conversation. */
+  readonly agentSession: string | null;
+  /**
+   * True once a resumed session's first turn was counted after an orc restart: the adapter then
+   * has no earlier total to subtract, so the saved transcript total may be counted twice.
+   */
+  readonly costMayBeOvercounted: boolean;
   /** `YYYY-MM-DD HH:mm`, local time. */
   readonly updated: string;
 }
@@ -75,6 +82,8 @@ export function sessionStateToFrontmatter(state: SessionState): FrontmatterData 
     tasksTotal: state.tasksTotal,
     checks: formatChecks(state.checks),
     costUsd: roundUsd(state.costUsd),
+    agentSession: state.agentSession,
+    costMayBeOvercounted: state.costMayBeOvercounted,
     updated: state.updated,
   };
 }
@@ -125,6 +134,14 @@ export function sessionStateFromFrontmatter(data: FrontmatterData): SessionNoteR
   if (typeof costUsd !== "number" || !Number.isFinite(costUsd) || costUsd < 0) {
     problems.push("costUsd: must be a number >= 0");
   }
+  const agentSession = data["agentSession"] ?? null;
+  if (agentSession !== null && typeof agentSession !== "string") {
+    problems.push("agentSession: must be a string or null");
+  }
+  const overcounted = data["costMayBeOvercounted"] ?? false;
+  if (typeof overcounted !== "boolean") {
+    problems.push("costMayBeOvercounted: must be true or false");
+  }
   const checksText = data["checks"] ?? "";
   const checks = typeof checksText === "string" ? parseChecks(checksText) : null;
   if (checks === null) {
@@ -135,7 +152,8 @@ export function sessionStateFromFrontmatter(data: FrontmatterData): SessionNoteR
     problems.length > 0 ||
     !isOneOf(SESSION_STATUSES, status) ||
     checks === null ||
-    typeof costUsd !== "number"
+    typeof costUsd !== "number" ||
+    typeof overcounted !== "boolean"
   ) {
     return { ok: false, problems };
   }
@@ -151,6 +169,8 @@ export function sessionStateFromFrontmatter(data: FrontmatterData): SessionNoteR
       tasksTotal,
       checks,
       costUsd,
+      agentSession: typeof agentSession === "string" && agentSession !== "" ? agentSession : null,
+      costMayBeOvercounted: overcounted,
       updated,
     },
   };

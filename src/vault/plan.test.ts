@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -8,6 +8,7 @@ import { parseFileBlocks } from "../planner/protocol.js";
 import { vaultPaths } from "./layout.js";
 import {
   markdownSections,
+  markTaskDone,
   PLAN_FILES,
   parseDocsNeeded,
   parsePlan,
@@ -219,5 +220,48 @@ describe("renderTaskGraph", () => {
     expect(note).toContain("    web__T1 --> web__T2");
     expect(note).toContain("  web__T1 --> api__T1");
     expect(note).toContain("  api__T2 --> web__T3");
+  });
+});
+
+describe("markTaskDone", () => {
+  const note =
+    "# Workstream: api\n\n## Goal\nx\n\n## Owns\n- `src/**`\n\n## Tasks\n- [ ] T1: First\n- [ ] T2: Second (needs: db/T1)\n- [x] T3: Third\n\n## Definition of done\n- [ ] T1: not a task\n";
+
+  async function setup(): Promise<{ paths: ReturnType<typeof vaultPaths>; file: string }> {
+    const paths = vaultPaths(tmp());
+    const file = join(paths.planDir, "workstreams", "api.md");
+    await writeFileAtomic(file, note);
+    return { paths, file };
+  }
+
+  it("ticks only the named task in the Tasks section", async () => {
+    const { paths, file } = await setup();
+    expect(await markTaskDone(paths, "api", "T2")).toBe(true);
+    const text = await readFile(file, "utf8");
+    expect(text).toContain("- [ ] T1: First\n- [x] T2: Second (needs: db/T1)\n- [x] T3: Third");
+    expect(text).toContain("## Definition of done\n- [ ] T1: not a task");
+  });
+
+  it("still parses afterwards, with the task marked done", async () => {
+    const { paths, file } = await setup();
+    await markTaskDone(paths, "api", "T1");
+    const parsed = parseWorkstream("api", await readFile(file, "utf8"));
+    expect(parsed.ok && parsed.value.tasks.map((t) => t.done)).toEqual([true, false, true]);
+  });
+
+  it("returns false for a task that is missing or already ticked, and for a missing note", async () => {
+    const { paths } = await setup();
+    expect(await markTaskDone(paths, "api", "T3")).toBe(false);
+    expect(await markTaskDone(paths, "api", "T9")).toBe(false);
+    expect(await markTaskDone(paths, "nope", "T1")).toBe(false);
+  });
+
+  it("keeps concurrent ticks from overwriting each other", async () => {
+    const { paths, file } = await setup();
+    await writeFile(file, note);
+    await Promise.all([markTaskDone(paths, "api", "T1"), markTaskDone(paths, "api", "T2")]);
+    const text = await readFile(file, "utf8");
+    expect(text).toContain("- [x] T1: First");
+    expect(text).toContain("- [x] T2: Second");
   });
 });

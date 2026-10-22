@@ -31,10 +31,25 @@ const STATE: SessionState = {
     { name: "lint", status: "fail" },
   ],
   costUsd: 0.4821,
+  agentSession: null,
+  costMayBeOvercounted: false,
   updated: "2026-10-21 22:05",
 };
 
 describe("session state <-> frontmatter", () => {
+  it("round-trips the agent session and the overcount flag", () => {
+    const state = { ...STATE, agentSession: "abc-123", costMayBeOvercounted: true };
+    expect(sessionStateFromFrontmatter(sessionStateToFrontmatter(state))).toEqual({
+      ok: true,
+      state,
+    });
+  });
+
+  it("reads notes written before those fields existed", () => {
+    const { agentSession: _a, costMayBeOvercounted: _c, ...old } = sessionStateToFrontmatter(STATE);
+    expect(sessionStateFromFrontmatter(old)).toEqual({ ok: true, state: STATE });
+  });
+
   it("round-trips", () => {
     expect(sessionStateFromFrontmatter(sessionStateToFrontmatter(STATE))).toEqual({
       ok: true,
