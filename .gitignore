@@ -11,3 +11,6 @@ coverage/
 
 # Local demo output (npm run demo:*)
 .demo/
+
+# M6 dogfood workspace (scripts/dogfood.mjs)
+.dogfood/
