@@ -38,6 +38,11 @@ export interface OrcConfig {
   readonly maxBudgetUsd: number;
   readonly retries: RetryConfig;
   readonly checks: readonly CheckCommand[];
+  /**
+   * Shell command `orc integrate` runs in the fresh integration worktree before the checks, so
+   * dependencies exist there (e.g. "npm ci"). Empty: run the checks on the bare checkout.
+   */
+  readonly installCommand: string;
 }
 
 export interface ModelConfigInput {
@@ -65,4 +70,5 @@ export interface OrcConfigInput {
   readonly maxBudgetUsd?: number | undefined;
   readonly retries?: RetryConfigInput | undefined;
   readonly checks?: readonly CheckCommandInput[] | undefined;
+  readonly installCommand?: string | undefined;
 }

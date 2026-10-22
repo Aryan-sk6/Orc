@@ -88,6 +88,14 @@ describe("validateConfigInput", () => {
     expect(issuePaths({ maxBudgetUsd: 0.5 })).toEqual([]);
   });
 
+  it("accepts an empty installCommand (none) but not a non-string one", () => {
+    expect(validateConfigInput({ installCommand: "" })).toEqual({
+      ok: true,
+      value: expect.objectContaining({ installCommand: "" }),
+    });
+    expect(issuePaths({ installCommand: 3 })).toEqual(["installCommand"]);
+  });
+
   it("rejects the removed token budgets as unknown keys", () => {
     expect(issuePaths({ budgets: { perRunTokens: 100 } })).toEqual(["budgets"]);
   });

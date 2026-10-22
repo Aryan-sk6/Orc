@@ -104,6 +104,15 @@ export interface EnsureWorktreeOptions {
   readonly base?: string | undefined;
 }
 
+export interface EnsureBranchWorktreeOptions {
+  /** Short branch name, e.g. "orc/api". */
+  readonly branch: string;
+  readonly worktreesDir: string;
+  /** Folder under `worktreesDir`, one path segment per entry. */
+  readonly folder: readonly string[];
+  readonly base?: string | undefined;
+}
+
 /**
  * Returns the workstream's worktree, creating the branch and/or worktree if needed.
  * Idempotent: an existing worktree on the right branch is reused as is.
@@ -112,12 +121,27 @@ export async function ensureWorktree(
   repo: Repo,
   options: EnsureWorktreeOptions,
 ): Promise<{ worktree: WorkstreamWorktree; created: boolean }> {
+  const { path, head, created } = await ensureBranchWorktree(repo, {
+    branch: workstreamBranch(options.name),
+    worktreesDir: options.worktreesDir,
+    folder: [options.name],
+    base: options.base,
+  });
   const branch = workstreamBranch(options.name);
+  return { worktree: { name: options.name, path, branch, head }, created };
+}
+
+/** The shared core of `ensureWorktree`: any branch, any folder below `worktreesDir`. */
+export async function ensureBranchWorktree(
+  repo: Repo,
+  options: EnsureBranchWorktreeOptions,
+): Promise<{ path: string; head: string; created: boolean }> {
+  const { branch } = options;
   const ref = `refs/heads/${branch}`;
   const run = { cwd: repo.root, env: repo.env };
 
   await mkdir(options.worktreesDir, { recursive: true });
-  const path = join(await realpath(options.worktreesDir), options.name);
+  const path = join(await realpath(options.worktreesDir), ...options.folder);
   const fromRoot = relative(repo.root, path);
   if (fromRoot === "" || !(fromRoot.startsWith("..") || isAbsolute(fromRoot))) {
     throw new OrcError(
@@ -137,7 +161,7 @@ export async function ensureWorktree(
         `${path} is a worktree on ${atPath.branch ?? "a detached HEAD"}, expected ${branch}`,
       );
     }
-    return { worktree: { name: options.name, path, branch, head: atPath.head }, created: false };
+    return { path, head: atPath.head, created: false };
   }
   const elsewhere = worktrees.find((wt) => wt.branch === ref);
   if (elsewhere !== undefined) {
@@ -153,6 +177,7 @@ export async function ensureWorktree(
     );
   }
 
+  await mkdir(dirname(path), { recursive: true });
   const branchExists =
     (await git(["rev-parse", "--verify", "--quiet", ref], { ...run, okExitCodes: [1] }))
       .exitCode === 0;
@@ -164,7 +189,7 @@ export async function ensureWorktree(
     await git(["worktree", "add", "--quiet", "-b", branch, path, base], run);
   }
   const head = await gitOutput(["rev-parse", "HEAD"], { cwd: path, env: repo.env });
-  return { worktree: { name: options.name, path, branch, head }, created: true };
+  return { path, head, created: true };
 }
 
 /**

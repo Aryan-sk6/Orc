@@ -9,6 +9,7 @@ import { vaultPaths } from "./layout.js";
 import {
   markdownSections,
   markTaskDone,
+  markTasksUndoneFrom,
   PLAN_FILES,
   parseDocsNeeded,
   parsePlan,
@@ -263,5 +264,40 @@ describe("markTaskDone", () => {
     const text = await readFile(file, "utf8");
     expect(text).toContain("- [x] T1: First");
     expect(text).toContain("- [x] T2: Second");
+  });
+});
+
+describe("markTasksUndoneFrom", () => {
+  const note =
+    "# Workstream: api\n\n## Goal\nx\n\n## Owns\n- `src/**`\n\n## Tasks\n- [x] T1: First\n- [x] T2: Second\n- [ ] T3: Third\n- [x] T4: Fourth\n\n## Definition of done\n- [x] T2: not a task\n";
+
+  it("unticks the named task and every ticked task after it, and nothing else", async () => {
+    const paths = vaultPaths(tmp());
+    const file = join(paths.planDir, "workstreams", "api.md");
+    await writeFileAtomic(file, note);
+
+    expect(await markTasksUndoneFrom(paths, "api", "T2")).toEqual(["T2", "T4"]);
+
+    const text = await readFile(file, "utf8");
+    expect(text).toContain("- [x] T1: First\n- [ ] T2: Second\n- [ ] T3: Third\n- [ ] T4: Fourth");
+    expect(text).toContain("## Definition of done\n- [x] T2: not a task");
+  });
+
+  it("returns nothing for a missing task or note", async () => {
+    const paths = vaultPaths(tmp());
+    await writeFileAtomic(join(paths.planDir, "workstreams", "api.md"), note);
+    expect(await markTasksUndoneFrom(paths, "api", "T9")).toEqual([]);
+    expect(await markTasksUndoneFrom(paths, "nope", "T1")).toEqual([]);
+  });
+});
+
+describe("reserved workstream names", () => {
+  it("rejects names orc uses for itself", () => {
+    const text =
+      "# Workstream\n\n## Goal\nx\n\n## Owns\n- `src/**`\n\n## Tasks\n- [ ] T1: a\n\n## Definition of done\n- ok\n";
+    for (const name of ["orc", "integration"]) {
+      const result = parseWorkstream(name, text);
+      expect(!result.ok && result.issues[0]).toContain("reserved for orc itself");
+    }
   });
 });

@@ -3,6 +3,7 @@ import { loadConfig } from "../../config/load.js";
 import { OrcError } from "../../core/errors.js";
 import { loadDriverPrompt } from "../../driver/prompts.js";
 import { runDriver } from "../../driver/run.js";
+import { assertVaultUntracked } from "../../git/integration.js";
 import { openRepo } from "../../git/worktrees.js";
 import { checkSetup } from "../../planner/check-setup.js";
 import { readDecisions } from "../../vault/decisions.js";
@@ -73,6 +74,7 @@ Options:
     }
 
     const repo = await openRepo(loaded.rootDir, io.env);
+    await assertVaultUntracked(repo, loaded.vaultPath);
     const driverSystemPrompt = await loadDriverPrompt();
     const adapter = await createAdapter(loaded, io.env);
     try {

@@ -7,6 +7,7 @@
   "driver": { "model": "claude-haiku-5-5" },
   "maxBudgetUsd": 20,
   "retries": { "maxPerTask": 2 },
+  "installCommand": "",
   "checks": [
     { "name": "typecheck", "command": "npm run typecheck", "timeoutMs": 600000 },
     { "name": "lint", "command": "npm run lint", "timeoutMs": 600000 },

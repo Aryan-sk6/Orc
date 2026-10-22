@@ -215,11 +215,17 @@ export function parseDocsNeeded(text: string): ParseResult<readonly DocRequireme
 // Workstreams
 
 /** Parses one workstream note. `needs` refs are normalized to "<ws>/<id>" but not resolved. */
+/** Session names orc uses for itself: run-level LOG lines and the integration session note. */
+export const RESERVED_WORKSTREAM_NAMES: readonly string[] = ["orc", "integration"];
+
 export function parseWorkstream(name: string, text: string): ParseResult<Workstream> {
   const file = `${PLAN_FILES.workstreamsDir}/${name}.md`;
   const issues: string[] = [];
   if (!isValidSessionName(name)) {
     issues.push(`${file}: workstream names must be lowercase kebab-case (they become branches)`);
+  }
+  if (RESERVED_WORKSTREAM_NAMES.includes(name)) {
+    issues.push(`${file}: "${name}" is reserved for orc itself, pick another workstream name`);
   }
   const sections = markdownSections(text);
   const goal = (section(sections, file, "Goal", issues) ?? []).join("\n").trim();
@@ -513,6 +519,55 @@ export async function markTaskDone(
       await writeFileAtomic(file, lines.join("\n"));
     }
     return changed;
+  });
+}
+
+/**
+ * Unticks `- [x] T3: …` and every ticked task after it in the same `## Tasks` section, for
+ * `orc rewind`. Returns the ids that were unticked, in file order. Empty if `taskId` is missing.
+ */
+export async function markTasksUndoneFrom(
+  paths: VaultPaths,
+  workstream: string,
+  taskId: string,
+): Promise<string[]> {
+  const file = workstreamNotePath(paths, workstream);
+  return planLocks.run(file, async () => {
+    const text = await readFileIfExists(file);
+    if (text === null) {
+      return [];
+    }
+    const undone: string[] = [];
+    let inTasks = false;
+    let inFence = false;
+    let reached = false;
+    const lines = text.split("\n").map((line) => {
+      if (/^\s*(```|~~~)/.test(line)) {
+        inFence = !inFence;
+      }
+      const heading = inFence ? null : /^##\s+(.+?)\s*#*\s*$/.exec(line);
+      if (heading?.[1] !== undefined) {
+        inTasks = heading[1].toLowerCase() === "tasks";
+        return line;
+      }
+      if (!inTasks || inFence) {
+        return line;
+      }
+      const match = /^([-*+]\s+)\[([ xX])\](\s+)(T\d+)(?=\s*[:.])/.exec(line);
+      if (match === null) {
+        return line;
+      }
+      reached = reached || match[4]?.toUpperCase() === taskId.toUpperCase();
+      if (!reached || match[2] === " ") {
+        return line;
+      }
+      undone.push((match[4] ?? "").toUpperCase());
+      return `${match[1]}[ ]${line.slice(match[1]?.length ?? 0).slice(3)}`;
+    });
+    if (undone.length > 0) {
+      await writeFileAtomic(file, lines.join("\n"));
+    }
+    return undone;
   });
 }
 

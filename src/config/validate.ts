@@ -28,6 +28,7 @@ const TOP_LEVEL_KEYS = [
   "maxBudgetUsd",
   "retries",
   "checks",
+  "installCommand",
 ] as const;
 const MODEL_KEYS = ["model"] as const;
 const RETRY_KEYS = ["maxPerTask"] as const;
@@ -58,6 +59,7 @@ export function validateConfigInput(raw: unknown): ValidationResult<OrcConfigInp
       maxPerTask: readInteger(retries, "maxPerTask", 0, "retries", issues),
     },
     checks: readChecks(raw, issues),
+    installCommand: readString(raw, "installCommand", "", issues, { allowEmpty: true }),
   };
 
   return issues.length === 0 ? { ok: true, value } : { ok: false, issues };
@@ -137,7 +139,7 @@ function readString(
   key: string,
   parentPath: string,
   issues: ConfigIssue[],
-  options: { readonly required?: boolean } = {},
+  options: { readonly required?: boolean; readonly allowEmpty?: boolean } = {},
 ): string | undefined {
   const value = parent[key];
   const path = joinPath(parentPath, key);
@@ -147,8 +149,11 @@ function readString(
     }
     return undefined;
   }
-  if (typeof value !== "string" || value.trim() === "") {
-    issues.push({ path, message: "must be a non-empty string" });
+  if (typeof value !== "string" || (value.trim() === "" && options.allowEmpty !== true)) {
+    issues.push({
+      path,
+      message: options.allowEmpty === true ? "must be a string" : "must be a non-empty string",
+    });
     return undefined;
   }
   return value;
