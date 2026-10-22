@@ -8,6 +8,7 @@ import {
   readSessionNotes,
   roundUsd,
   type SessionState,
+  SUMMARY_SESSION,
 } from "../../vault/session-note.js";
 import { parseCommandArgs } from "../args.js";
 import type { Command } from "../command.js";
@@ -21,6 +22,9 @@ export interface StatusReport {
   /** Sum of the sessions' `costUsd`: an estimate from the Agent SDK, not billing data. */
   readonly costUsd: number;
   readonly maxBudgetUsd: number;
+  /** Spent by `orc summarize` calls: kept apart from `costUsd` and the run cap. */
+  readonly summaryCostUsd: number;
+  readonly summaryBudgetUsd: number;
 }
 
 export const statusCommand: Command = {
@@ -40,7 +44,11 @@ Options:
   run: async (argv, io) => {
     const { values } = parseCommandArgs(argv, { json: { type: "boolean" } });
     const loaded = await loadConfig({ cwd: io.cwd, path: values.config });
-    const report = await buildStatusReport(loaded.vaultPath, loaded.config.maxBudgetUsd);
+    const report = await buildStatusReport(
+      loaded.vaultPath,
+      loaded.config.maxBudgetUsd,
+      loaded.config.summaryBudgetUsd,
+    );
 
     if (values.json === true) {
       io.stdout(`${JSON.stringify(report, null, 2)}\n`);
@@ -57,6 +65,7 @@ Options:
 export async function buildStatusReport(
   vaultPath: string,
   maxBudgetUsd: number,
+  summaryBudgetUsd: number,
 ): Promise<StatusReport> {
   await assertDirectory(vaultPath);
   const paths = vaultPaths(vaultPath);
@@ -76,9 +85,17 @@ export async function buildStatusReport(
     sessions,
     invalidNotes,
     openDecisions: decisions.filter((decision) => decision.status === "open").length,
-    costUsd: roundUsd(sessions.reduce((sum, session) => sum + session.costUsd, 0)),
+    costUsd: roundUsd(sumCost(sessions.filter((session) => session.session !== SUMMARY_SESSION))),
     maxBudgetUsd,
+    summaryCostUsd: roundUsd(
+      sumCost(sessions.filter((session) => session.session === SUMMARY_SESSION)),
+    ),
+    summaryBudgetUsd,
   };
+}
+
+function sumCost(sessions: readonly SessionState[]): number {
+  return sessions.reduce((sum, session) => sum + session.costUsd, 0);
 }
 
 export function renderStatus(report: StatusReport): string {
@@ -113,8 +130,14 @@ export function renderStatus(report: StatusReport): string {
   return (
     `${table}\n\n` +
     `Spend: ${formatUsd(report.costUsd)} of ${formatUsd(report.maxBudgetUsd)} run cap ` +
-    `(${share.toFixed(1)}%), estimated by the Agent SDK, not billing data\n${decisions}\n${overcountNote(report.sessions)}`
+    `(${share.toFixed(1)}%), estimated by the Agent SDK, not billing data\n${summaryLine(report)}${decisions}\n${overcountNote(report.sessions)}`
   );
+}
+
+function summaryLine(report: StatusReport): string {
+  return report.sessions.some((session) => session.session === SUMMARY_SESSION)
+    ? `Summary: ${formatUsd(report.summaryCostUsd)} so far, capped at ${formatUsd(report.summaryBudgetUsd)} per call, separate from the run cap\n`
+    : "";
 }
 
 function overcountNote(sessions: readonly SessionState[]): string {

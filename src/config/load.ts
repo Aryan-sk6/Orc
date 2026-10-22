@@ -83,6 +83,7 @@ export function resolveConfig(
         timeoutMs: check.timeoutMs ?? DEFAULT_CHECK_TIMEOUT_MS,
       })) ?? defaults.checks,
     installCommand: input.installCommand ?? defaults.installCommand,
+    summaryBudgetUsd: input.summaryBudgetUsd ?? defaults.summaryBudgetUsd,
   };
 }
 

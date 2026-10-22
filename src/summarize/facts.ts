@@ -2,7 +2,12 @@ import type { OrcConfig } from "../config/types.js";
 import { readFileIfExists } from "../core/fs.js";
 import { type Decision, readDecisions } from "../vault/decisions.js";
 import type { VaultPaths } from "../vault/layout.js";
-import { readSessionNotes, roundUsd, type SessionState } from "../vault/session-note.js";
+import {
+  readSessionNotes,
+  roundUsd,
+  type SessionState,
+  SUMMARY_SESSION,
+} from "../vault/session-note.js";
 
 export interface SessionFacts {
   readonly state: SessionState;
@@ -16,8 +21,12 @@ export interface ReportFacts {
   readonly sessions: readonly SessionFacts[];
   readonly invalidNotes: readonly string[];
   readonly decisions: readonly Decision[];
+  /** Run spend: every session except the summary, which has its own cap. */
   readonly spentUsd: number;
   readonly capUsd: number;
+  /** Total spent by `orc summarize` calls so far, and the cap of one call. */
+  readonly summarySpentUsd: number;
+  readonly summaryCapUsd: number;
 }
 
 export async function gatherFacts(
@@ -42,8 +51,18 @@ export async function gatherFacts(
     sessions,
     invalidNotes,
     decisions: await readDecisions(vault),
-    spentUsd: roundUsd(sessions.reduce((sum, s) => sum + s.state.costUsd, 0)),
+    spentUsd: roundUsd(
+      sessions
+        .filter((s) => s.state.session !== SUMMARY_SESSION)
+        .reduce((sum, s) => sum + s.state.costUsd, 0),
+    ),
     capUsd: config.maxBudgetUsd,
+    summarySpentUsd: roundUsd(
+      sessions
+        .filter((s) => s.state.session === SUMMARY_SESSION)
+        .reduce((sum, s) => sum + s.state.costUsd, 0),
+    ),
+    summaryCapUsd: config.summaryBudgetUsd,
   };
 }
 
@@ -78,7 +97,8 @@ export function renderFacts(facts: ReportFacts): string {
   const overcount = facts.sessions.some((s) => s.state.costMayBeOvercounted);
   const spend =
     `${usd(facts.spentUsd)} of ${usd(facts.capUsd)} run cap, summed over the session notes ` +
-    "(Agent SDK estimate, not billing data; planner and summary spend are not included)." +
+    "(Agent SDK estimate, not billing data; planner spend is not included). " +
+    `Summary calls: ${usd(facts.summarySpentUsd)} so far, capped at ${usd(facts.summaryCapUsd)} per call, outside the run cap.` +
     (overcount ? " Spend may be overcounted after a restart." : "");
   const invalid =
     facts.invalidNotes.length === 0

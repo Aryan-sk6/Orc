@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { captureIO } from "../../../test/helpers/cli.js";
 import { useTmpDir } from "../../../test/helpers/tmp-dir.js";
+import { vaultPaths } from "../../vault/layout.js";
+import { writeSessionState } from "../../vault/session-note.js";
 import { main } from "../main.js";
 import { formatChecksCell, formatUsd, renderStatus, type StatusReport } from "./status.js";
 
@@ -124,6 +126,8 @@ describe("renderStatus after a restart", () => {
     openDecisions: 0,
     costUsd: 1,
     maxBudgetUsd: 5,
+    summaryCostUsd: 0,
+    summaryBudgetUsd: 0.25,
   });
 
   it("warns that spend may be overcounted for resumed sessions", () => {
@@ -134,5 +138,61 @@ describe("renderStatus after a restart", () => {
 
   it("says nothing otherwise", () => {
     expect(renderStatus(report(false))).not.toContain("overcounted");
+  });
+});
+
+describe("orc status: summary spend", () => {
+  const api = {
+    session: "api",
+    workstream: "api",
+    branch: "orc/api",
+    status: "done",
+    currentTask: null,
+    tasksDone: 1,
+    tasksTotal: 1,
+    checks: [],
+    costUsd: 2,
+    agentSession: null,
+    costMayBeOvercounted: false,
+    updated: "2026-10-22 10:00",
+  } as const;
+
+  it("shows the summary cost on its own line and keeps it out of the run spend", async () => {
+    const dir = tmp();
+    await writeFile(join(dir, "orc.config.json"), '{"maxBudgetUsd": 10}');
+    const paths = vaultPaths(join(dir, "vault"));
+    await writeSessionState(paths, api);
+    await writeSessionState(paths, {
+      ...api,
+      session: "summarize",
+      workstream: "summarize",
+      branch: "none",
+      tasksDone: 0,
+      tasksTotal: 0,
+      costUsd: 0.1,
+    });
+    const io = captureIO(dir);
+
+    expect(await main(["status"], io)).toBe(0);
+
+    expect(io.out()).toContain("Spend: $2.00 of $10.00 run cap (20.0%)");
+    expect(io.out()).toContain(
+      "Summary: $0.10 so far, capped at $0.25 per call, separate from the run cap",
+    );
+    expect(io.out()).toMatch(/summarize\s+done/);
+  });
+
+  it("has no summary line before the first summary", () => {
+    const report: StatusReport = {
+      vaultPath: "/v",
+      sessions: [api],
+      invalidNotes: [],
+      openDecisions: 0,
+      costUsd: 2,
+      maxBudgetUsd: 10,
+      summaryCostUsd: 0,
+      summaryBudgetUsd: 0.25,
+    };
+    expect(renderStatus(report)).not.toContain("Summary:");
   });
 });

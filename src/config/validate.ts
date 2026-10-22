@@ -29,6 +29,7 @@ const TOP_LEVEL_KEYS = [
   "retries",
   "checks",
   "installCommand",
+  "summaryBudgetUsd",
 ] as const;
 const MODEL_KEYS = ["model"] as const;
 const RETRY_KEYS = ["maxPerTask"] as const;
@@ -60,6 +61,7 @@ export function validateConfigInput(raw: unknown): ValidationResult<OrcConfigInp
     },
     checks: readChecks(raw, issues),
     installCommand: readString(raw, "installCommand", "", issues, { allowEmpty: true }),
+    summaryBudgetUsd: readPositiveNumber(raw, "summaryBudgetUsd", "", issues),
   };
 
   return issues.length === 0 ? { ok: true, value } : { ok: false, issues };
