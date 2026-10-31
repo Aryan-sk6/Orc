@@ -1,7 +1,4 @@
-# Obsidian per-user state
-vault/.obsidian/workspace*.json
-vault/.obsidian/cache
-vault/.trash/
+# OS
 .DS_Store
 
 # Build / deps

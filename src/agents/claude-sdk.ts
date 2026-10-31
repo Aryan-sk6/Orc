@@ -10,8 +10,7 @@ import type {
 
 /*
  * AgentAdapter backed by the Claude Agent SDK (@anthropic-ai/claude-agent-sdk).
- * This is the ONLY file that imports the SDK. Verified against 0.3.308's sdk.d.ts;
- * see vault/docs/claude-agent-sdk.md and Decisions/0009.
+ * This is the ONLY file that imports the SDK. Verified against 0.3.308's sdk.d.ts.
  *
  * One runTurn = one query() call in single-message mode. Follow-up turns pass `resume`,
  * which continues the conversation with full prior context.

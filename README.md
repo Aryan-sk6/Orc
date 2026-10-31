@@ -178,7 +178,7 @@ npm run demo:status  # orc status on a fake vault
 npm run demo:plan    # orc plan on a todo idea with the fake adapter, no cost
 ```
 
-`npm run smoke:sdk` is the one script that spends money (a few cents): three cheap turns through the real adapter. Contributor and agent conventions are in [`agents.md`](agents.md); the project's own memory (decisions, sessions, roadmap) is in [`vault/`](vault/Home.md) and opens as an Obsidian vault.
+`npm run smoke:sdk` is the one script that spends money (a few cents): three cheap turns through the real adapter.
 
 ## Contributing
 
