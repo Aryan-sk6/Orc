@@ -11,7 +11,7 @@
 
 </div>
 
-> **Status: beta.** orc is fully built and covered by 360+ tests that run against a scripted fake agent. It has **not yet been run end to end against the live Claude API**, so prompts may need tuning and I have no measured time or cost numbers to show you. See [Honest status](#honest-status). If you try it, please [open an issue](https://github.com/Aryan-sk6/Orc/issues) with what happened. That is the most useful thing anyone can do for this project.
+> **Status: beta.** orc is fully built and covered by 360+ tests that run against a scripted fake agent. It has done **one live test run**: a development build of orc planned and built [Ghost Rehearsal](https://github.com/Aryan-sk6/ghost-rehearsal), a voice practice app (see [Test run: Ghost Rehearsal](#test-run-ghost-rehearsal)). That is one run, not a benchmark, so prompts may still need tuning. See [Honest status](#honest-status). If you try it, please [open an issue](https://github.com/Aryan-sk6/Orc/issues) with what happened. That is the most useful thing anyone can do for this project.
 
 ---
 
@@ -162,10 +162,19 @@ Spend figures are the Agent SDK's client-side estimate, **not billing data**. Ch
 | Planner, driver loop, integration, rewind, summarize, kit | Built and tested (360+ tests) against a scripted fake agent |
 | Claude Agent SDK adapter | Written against the 0.3.308 type definitions; **never run live** |
 | The prompts (planner, driver, summary, skills) | First drafts, **never run against a real model** |
-| Time and cost numbers | **None.** Nothing has been measured |
+| Time and cost numbers | From **one run** only: see [Test run: Ghost Rehearsal](#test-run-ghost-rehearsal) |
 | `/orc-*` slash commands in Claude Code, Orca, VS Code | Installed by `orc init`; **not yet tried** in those tools |
 
-A first real run will almost certainly turn up prompt problems. Reports with the contents of `vault/LOG.md` and the session notes are gold.
+Reports with the contents of `vault/LOG.md` and the session notes are gold.
+
+### Test run: Ghost Rehearsal
+
+[Ghost Rehearsal](https://github.com/Aryan-sk6/ghost-rehearsal) is the test run for orc. It is a Next.js web app for practising a hard conversation (asking for a raise, a refund, a pitch) out loud against a voice AI, then getting feedback. A development build of orc, not the published package, built it from a one-page idea.
+
+- **Plan:** 4 workstreams (engine, speech, analysis, web) and 18 tasks.
+- **Build:** 18 of 18 tasks done in 24 minutes, every task gated on typecheck, lint, tests and build. All 4 workstreams merged with the full checks passing.
+- **Review:** the reviewer flagged 7 issues the checks missed, for example a speech bug that dropped the last words of a turn. Those were fixed afterwards by hand, outside orc, along with later features.
+- **Estimated cost:** about $1.45 to plan and $6.51 to build, as an API-equivalent estimate.
 
 ## Develop
 
